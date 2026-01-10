@@ -15,4 +15,7 @@ My goal is to understand the hardware architecture deeply and write highly optim
 |:-:|:---|:---|:---|
 | 01 | [Vector Addition](./CudaStudy/01_Add) | Grid-Stride Loop, Unified Memory, Profiling | Done |
 | 02 | Matrix Multiplication | Shared Memory, Tiling, Coalescing | Planned |
-| 03 | TBD | Streams, Parallel Reduction | Planned |
+| 03 | Parallel Reduction | Synchronization, Warp Divergence, Bank Conflicts | Planned |
+| 04 | N-Body Simulation | Physics Integration, All-Pairs Interaction | Planned |
+| 05 | Spatial Partitioning | Uniform Grid, Atomic Operations | Planned |
+| 06 | Massive Boids | Flocking Behavior, Optimization, Visualization | Planned |
