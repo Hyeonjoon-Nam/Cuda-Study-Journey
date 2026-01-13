@@ -14,7 +14,7 @@ My goal is to understand the hardware architecture deeply and write highly optim
 | # | Project | Key Concepts | Status |
 |:-:|:---|:---|:---|
 | 01 | [Vector Addition](./CudaStudy/01_Add) | Grid-Stride Loop, Unified Memory, Profiling | Done |
-| 02 | Matrix Multiplication | Shared Memory, Tiling, Coalescing | Planned |
+| 02 | [Matrix Multiplication](./CudaStudy/02_MatrixMultiplication) | Shared Memory, Tiling, Vectorized Access (float4) | Done |
 | 03 | Parallel Reduction | Synchronization, Warp Divergence, Bank Conflicts | Planned |
 | 04 | N-Body Simulation | Physics Integration, All-Pairs Interaction | Planned |
 | 05 | Spatial Partitioning | Uniform Grid, Atomic Operations | Planned |
