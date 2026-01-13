@@ -8,22 +8,21 @@ The goal was to move from a naive CPU-like implementation to a fully optimized, 
 
 ## Implementation Details
 
-I iterated through three versions of the kernel:
+I iterated through three kernel versions to understand thread hierarchy and scalability:
 
 ### 1. v1_single_thread (Naive)
-- **Configuration:** `<<<1, 1>>>`
-- Runs effectively as a sequential code on a single GPU thread.
-- **Purpose:** Establishing a baseline to measure pure overhead and lack of parallelism.
+- **Strategy:** Runs the kernel with a single thread block containing only 1 thread (`<<<1, 1>>>`).
+- **Bottleneck:** Serialization. It effectively runs as sequential CPU code on the GPU, incurring overhead without any parallelism benefit.
 
 ### 2. v2_single_block (Basic Parallelism)
-- **Configuration:** `<<<1, 256>>>`
-- Utilizes multiple threads but is limited to a single Streaming Multiprocessor (SM).
-- **Limitation:** Cannot scale beyond the max threads per block (1024) or utilize the full GPU.
+- **Strategy:** Utilizes multiple threads (256) but confines them to a single thread block (`<<<1, 256>>>`).
+- **Mechanism:** Basic parallel execution within one Streaming Multiprocessor (SM).
+- **Limitation:** Hardware Underutilization. The kernel cannot scale beyond 1024 threads (1 block limit) and leaves the rest of the GPU idle.
 
 ### 3. v3_grid_stride (Optimized)
-- **Configuration:** `<<<numBlocks, 256>>>`
-- Implements the **Grid-Stride Loop** pattern.
-- **Advantage:** Decouples grid size from data size, allowing the kernel to scale to any input size while fully saturating the GPU hardware.
+- **Strategy:** Implements the **Grid-Stride Loop** pattern with calculated grid dimensions (`<<<numBlocks, 256>>>`).
+- **Advantage:** Decouples grid size from data size.
+- **Result:** The kernel scales to any input size and fully saturates the GPU hardware, achieving massive speedup.
 
 ## Performance Analysis
 
@@ -31,15 +30,20 @@ Results captured using **NVIDIA Nsight Compute** (Release Build).
 
 | Version | Execution Time | Speedup (vs v1) | Note |
 | :--- | :--- | :--- | :--- |
-| v1 (Single Thread) | ~164.39 ms | 1x | Baseline |
-| v2 (Single Block) | ~2.24 ms | ~73x | Limited by 1 Block |
-| **v3 (Grid-Stride)** | **~37.92 us** | **~4,335x** | **Full Utilization** |
+| v1 (Single Thread) | ~164.39 ms | 1x | Baseline (Sequential) |
+| v2 (Single Block) | ~2.24 ms | ~73x | Limited by Single Block |
+| **v3 (Grid-Stride)** | **~37.92 us** | **~4,335x** | **Full Device Utilization** |
 
-### Nsight Compute Screenshot
-![Profiling Result](./assets/nsight_profiling_result.png)
-*(Comparision of execution time showing drastic improvement in v3)*
+### Nsight Compute Profiling
+
+**Performance Evolution**
+*(Profiling results showing the dramatic execution time reduction in v3)*
+
+![Profiling Result V3](./assets/nsight_profiling_result_3.png)
+
+> **Note:** The final version (v3) processes 1M elements in microseconds by effectively utilizing all available Streaming Multiprocessors (SMs) on the GPU.
 
 ## Key Takeaways
-- **Grid-Stride Loops are essential:** They make kernels robust against varying data sizes and hardware configurations.
-- **Launch Configuration matters:** Simply adding threads isn't enough; calculating the correct number of blocks is crucial for utilizing all SMs.
-- **Unified Memory:** Simplifies memory management for prototyping, though manual `cudaMemcpy` might be preferred for explicit control in future projects.
+- **Grid-Stride Loops are essential:** They provide scalability and prevent kernel crashes when data size exceeds the maximum grid dimensions.
+- **Launch Configuration matters:** Simply adding threads isn't enough; calculating the correct number of blocks (`(N + blockSize - 1) / blockSize`) is crucial for occupying the entire GPU.
+- **Bottleneck Analysis:** Moving from "Single Thread" -> "Single Block" -> "Grid Stride" clearly demonstrated how hardware utilization directly correlates with throughput.
