@@ -17,5 +17,5 @@ My goal is to understand the hardware architecture deeply and write highly optim
 | 02 | [Matrix Multiplication](./CudaStudy/02_MatrixMultiplication) | Shared Memory, Tiling, Vectorized Access (float4) | Done |
 | 03 | [Parallel Reduction](./CudaStudy/03_ParallelReduction) | Warp Divergence, Loop Unrolling, Volatile, Bank Conflicts | Done |
 | 04 | [N-Body Simulation](./CudaStudy/04_NBodySimulation) | Compute vs Memory Bound, Tiling, Thread Coarsening, Occupancy | Done |
-| 05 | Spatial Partitioning | Uniform Grid, Atomic Operations | Planned |
+| 05 | Spatial Partitioning | Uniform Grid, Atomic Operations | Integrated into Project 06 |
 | 06 | Massive Boids | Flocking Behavior, Optimization, OpenGL Interop | Planned |
