@@ -28,11 +28,11 @@ Three kernel versions were implemented to systematically address performance bot
 ### Scenario A: Small Dataset ($N = 10,000$)
 At this scale, the GPU resources were not fully saturated by the Coarsening kernel.
 
-| Kernel Version | Performance (GFLOPS) | Speedup | Bottleneck |
-| :--- | :--- | :--- | :--- |
-| Naive | ~1,500 GFLOPS | 1.0x | Global Memory Bandwidth |
-| **Shared Memory Tiling** | **~6,680 GFLOPS** | **4.4x** | **Compute Limits (Optimal)** |
-| Thread Coarsening (x2) | ~2,000 GFLOPS | 1.3x | **Low Occupancy** |
+| Kernel Version | Performance (GFLOPS) | Bottleneck |
+| :--- | :--- | :--- |
+| Naive | ~1,500 GFLOPS | Global Memory Bandwidth |
+| **Shared Memory Tiling** | **~6,680 GFLOPS** | **Compute Limits (Optimal)** |
+| Thread Coarsening (x2) | ~2,003 GFLOPS | **Low Occupancy** |
 
 **Analysis of Coarsening Failure:**
 With $N=10,000$ and a block size of 256, the standard kernel launches ~40 blocks. Since the RTX 3070 has 46 Streaming Multiprocessors (SMs), the GPU is well-utilized. However, Thread Coarsening (x2) halves the number of blocks to ~20. This leaves more than half of the GPU's SMs idle, resulting in a massive performance drop.
@@ -47,7 +47,7 @@ To verify the Coarsening hypothesis, the simulation size was increased to satura
 | Thread Coarsening (x2) | ~6,443 GFLOPS | Occupancy recovered, nearly matches Tiling |
 
 **Conclusion:**
-When the grid size is sufficient to fill the GPU ($N=81,920$), Thread Coarsening recovers its performance, matching the Shared Memory kernel. However, it does not significantly outperform it on this architecture, suggesting that the compiler's optimization on the standard loop was already highly efficient or that register pressure limited further gains.
+When the grid size is sufficient to fill the GPU ($N=81,920$), Thread Coarsening recovers its performance (jumping from ~2k to ~6.4k GFLOPS). However, it does not significantly outperform the Shared Memory kernel on this architecture, suggesting that the compiler's optimization on the standard loop was already highly efficient or that register pressure limited further gains.
 
 ## Nsight Compute Profiling
 
@@ -64,5 +64,6 @@ When the grid size is sufficient to fill the GPU ($N=81,920$), Thread Coarsening
 *Profiling reveals the root cause of the performance drop: The grid size (20 blocks) is insufficient to occupy the available SMs on the RTX 3070.*
 
 ## Visualization
-![Visualization](./assets/visual_result.png)
-*Validation of the simulation logic (N=10,000).*
+![Visualization](./assets/visual_full.png)
+![Visualization](./assets/visual_zoom.png)
+*Result of the simulation visualized using Python (N=81,920).*

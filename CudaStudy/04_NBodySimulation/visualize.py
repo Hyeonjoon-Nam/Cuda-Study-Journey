@@ -30,10 +30,10 @@ def main():
 
         # 4. 카메라 시점 및 범위 설정
         # 초기 랜덤 범위가 -1 ~ 1 이었지만, 200번 움직였으니 조금 퍼졌을 수 있음
-        limit = 1.5 
-        ax.set_xlim([-limit, limit])
-        ax.set_ylim([-limit, limit])
-        ax.set_zlim([-limit, limit])
+        #limit = 1.5 
+        #ax.set_xlim([-limit, limit])
+        #ax.set_ylim([-limit, limit])
+        #ax.set_zlim([-limit, limit])
         
         ax.set_title(f"N-Body Result (N={len(df)})", color='white', fontsize=15)
         plt.axis('off') # 축 눈금 끄기
