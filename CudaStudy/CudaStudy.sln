@@ -13,7 +13,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "03_ParallelReduction", "03_
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "04_NBodySimulation", "04_NBodySimulation\04_NBodySimulation.vcxproj", "{D8F802D7-16D7-2F90-4087-1F174F9C66DB}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "06_MassiveBoids", "06_MassiveBoids\06_MassiveBoids.vcxproj", "{FBDA8EDC-6031-489B-B946-BCB038B02234}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "06_Heterogeneous_HPC", "06_Heterogeneous_HPC\06_Heterogeneous_HPC.vcxproj", "{E0DC010F-9D27-4623-B13A-C86C5B4BDCFB}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -41,10 +41,10 @@ Global
 		{D8F802D7-16D7-2F90-4087-1F174F9C66DB}.Debug|x64.Build.0 = Debug|x64
 		{D8F802D7-16D7-2F90-4087-1F174F9C66DB}.Release|x64.ActiveCfg = Release|x64
 		{D8F802D7-16D7-2F90-4087-1F174F9C66DB}.Release|x64.Build.0 = Release|x64
-		{FBDA8EDC-6031-489B-B946-BCB038B02234}.Debug|x64.ActiveCfg = Debug|x64
-		{FBDA8EDC-6031-489B-B946-BCB038B02234}.Debug|x64.Build.0 = Debug|x64
-		{FBDA8EDC-6031-489B-B946-BCB038B02234}.Release|x64.ActiveCfg = Release|x64
-		{FBDA8EDC-6031-489B-B946-BCB038B02234}.Release|x64.Build.0 = Release|x64
+		{E0DC010F-9D27-4623-B13A-C86C5B4BDCFB}.Debug|x64.ActiveCfg = Debug|x64
+		{E0DC010F-9D27-4623-B13A-C86C5B4BDCFB}.Debug|x64.Build.0 = Debug|x64
+		{E0DC010F-9D27-4623-B13A-C86C5B4BDCFB}.Release|x64.ActiveCfg = Release|x64
+		{E0DC010F-9D27-4623-B13A-C86C5B4BDCFB}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
