@@ -18,7 +18,7 @@ My goal is to understand the hardware architecture deeply and write highly optim
 | 03 | [Parallel Reduction](./CudaStudy/03_ParallelReduction) | Warp Divergence, Loop Unrolling, Volatile, Bank Conflicts | Done |
 | 04 | [N-Body Simulation](./CudaStudy/04_NBodySimulation) | Compute vs Memory Bound, Tiling, Thread Coarsening, Occupancy | Done |
 | 05 | Spatial Partitioning | Uniform Grid, Atomic Operations | Integrated into Project 06 |
-| 06 | [Heterogeneous HPC System](./CudaStudy/06_MassiveBoids) | CUDA-OpenGL Interop, Spatial Partitioning, UDP, Bare-metal Input | **In Progress** |
+| 06 | [Heterogeneous HPC System](./CudaStudy/06_Heterogeneous_HPC) | CUDA-OpenGL Interop, Spatial Partitioning, UDP, Bare-metal Input | **In Progress** |
 
 ---
 
