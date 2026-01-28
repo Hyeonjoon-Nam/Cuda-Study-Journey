@@ -13,13 +13,30 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="main.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
+    <Filter Include="Simulation">
+      <UniqueIdentifier>{2292f23d-364c-4b0a-b16e-e0f4d6111d26}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Gateway">
+      <UniqueIdentifier>{45c119bb-1249-468d-8348-f755117742c5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Firmware">
+      <UniqueIdentifier>{9b974994-f775-466f-ac38-f0beddeeeaee}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Simulation\main.cpp">
+      <Filter>Simulation</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <CudaCompile Include="Simulation\kernel.cu">
+      <Filter>Simulation</Filter>
+    </CudaCompile>
+    <CudaCompile Include="Simulation\kernel.cuh">
+      <Filter>Simulation</Filter>
+    </CudaCompile>
   </ItemGroup>
 </Project>
