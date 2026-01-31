@@ -56,7 +56,7 @@ graph LR
 
 ## 📅 Development Roadmap
 
-### Phase 1: Core Engine (Current Focus)
+### Phase 1: Core Engine (Complete)
 
 - [x] **Step 1: OpenGL Interop Setup (Zero-Copy Visualization)**
     - Established CUDA-OpenGL shared memory pipeline.
@@ -64,12 +64,12 @@ graph LR
 - [x] **Step 2: Naive Boids Implementation ($O(N^2)$)**
     - Implemented Cohesion, Separation, and Alignment rules.
     - Verified simulation logic with 4,096 particles.
-    - Debugged rendering pipeline (VAO, homogeneous coordinates).
-- [ ] **Step 3: Spatial Partitioning Optimization (Uniform Grid)**
-    - Implement Spatial Hashing / Uniform Grid to optimize neighbor search.
-    - Scale simulation up to 1,000,000 particles.
+- [x] **Step 3: Spatial Partitioning Optimization (Uniform Grid)**
+    - Implemented Spatial Hashing / Uniform Grid to optimize neighbor search ($O(N)$).
+    - Integrated Thrust library for parallel sorting.
+    - **Performance Achieved:** 262,144 particles @ 60 FPS (RTX 3070).
 
-### Phase 2: System Integration
+### Phase 2: System Integration (Next)
 
 - [ ] **Step 4: C++ UDP Gateway (Serial <-> Network Bridge)**
 - [ ] **Step 5: Thread-safe Network Receiver in Simulation**
@@ -79,4 +79,5 @@ graph LR
 - [ ] **Step 6: Bare-metal Firmware Implementation (Register Level)**
 
 ## Performance Analysis
-*(To be updated upon project completion. Expected metrics: FPS comparison between O(N^2) vs Grid, and Latency measurement from Arduino to Render.)*
+- **Naive O(N^2):** ~4,096 particles max before FPS drop.
+- **Uniform Grid O(N):** Stable 60 FPS at 262,144 particles.
