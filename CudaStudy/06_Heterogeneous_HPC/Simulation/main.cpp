@@ -1,102 +1,101 @@
 #include <GL/glew.h>
 #include <GL/freeglut.h>
 #include <iostream>
+#include <string> // Title update용
 #include "kernel.cuh" 
 
 // OpenGL Handles
-GLuint vbo; // Vertex Buffer Object
-GLuint vao; // Vertex Array Object
+GLuint vbo;
+GLuint vao;
 
-// CUDA Graphics Resource Handle
+// CUDA Resource
 struct cudaGraphicsResource* cuda_vbo_resource;
 
-// Simulation Parameters
-// Using 64x64 (4096) particles for Naive O(N^2) implementation.
-const int mesh_width = 64;
-const int mesh_height = 64;
+// ------------------------------------------------------------------
+// [CHANGE] Massive Scale Up!
+// ------------------------------------------------------------------
+// From 64x64 (4,096) -> 512x512 (262,144 particles)
+// RTX 3070 should handle this easily with Uniform Grid.
+const int mesh_width = 512;
+const int mesh_height = 512;
 const int num_particles = mesh_width * mesh_height;
 
 float anim_time = 0.0f;
+int fps_frame_count = 0;
+int fps_time_base = 0;
 
-// ------------------------------------------------------------------
-// Initialize OpenGL Buffers & Register with CUDA
-// ------------------------------------------------------------------
 void initGL() {
-    // 1. Create and bind VAO (Essential for Core Profile)
     glGenVertexArrays(1, &vao);
     glBindVertexArray(vao);
 
-    // 2. Create and bind VBO
     glGenBuffers(1, &vbo);
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
 
-    // 3. Allocate memory on GPU (GL_DYNAMIC_DRAW for frequent updates)
     unsigned int size = num_particles * 4 * sizeof(float);
     glBufferData(GL_ARRAY_BUFFER, size, 0, GL_DYNAMIC_DRAW);
 
-    // Unbind buffer (VAO keeps the state)
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-    // 4. Register VBO with CUDA
     initCuda(&cuda_vbo_resource, vbo, num_particles);
 }
 
-// ------------------------------------------------------------------
-// Main Rendering Loop
-// ------------------------------------------------------------------
+void calculateFPS() {
+    fps_frame_count++;
+    int current_time = glutGet(GLUT_ELAPSED_TIME);
+
+    if (current_time - fps_time_base > 1000) {
+        float fps = fps_frame_count * 1000.0f / (current_time - fps_time_base);
+        std::string title = "Project 06: Uniform Grid Boids | Particles: " 
+                            + std::to_string(num_particles) 
+                            + " | FPS: " + std::to_string((int)fps);
+        glutSetWindowTitle(title.c_str());
+        
+        fps_time_base = current_time;
+        fps_frame_count = 0;
+    }
+}
+
 void display() {
     anim_time += 0.01f;
 
-    // Step 1: Run CUDA Kernel to update particle positions
+    // 1. CUDA Physics Update
     runCuda(cuda_vbo_resource, num_particles, anim_time);
 
-    // Step 2: Render particles using OpenGL
+    // 2. Render
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glClearColor(0.0f, 0.0f, 0.0f, 1.0f); // Black background
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
-    
-    // Define layout: 4 floats per vertex (x, y, z, w)
     glVertexPointer(4, GL_FLOAT, 0, (void*)0);
     glEnableClientState(GL_VERTEX_ARRAY);
 
-    // Draw settings
-    glPointSize(3.0f);            // Make points visible
-    glColor3f(0.0f, 1.0f, 1.0f);  // Cyan color
+    // [CHANGE] Reduce point size because there are too many particles
+    glPointSize(1.0f); 
+    glColor3f(0.0f, 1.0f, 1.0f); // Cyan
     glDrawArrays(GL_POINTS, 0, num_particles);
 
-    // Cleanup state
     glDisableClientState(GL_VERTEX_ARRAY);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-    // Swap buffers (Double Buffering)
     glutSwapBuffers();
-    
-    // Request next frame
     glutPostRedisplay();
+    
+    // 3. FPS Calculation
+    calculateFPS();
 }
 
-// ------------------------------------------------------------------
-// Main Entry Point
-// ------------------------------------------------------------------
 int main(int argc, char** argv) {
-    // 1. Initialize GLUT
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA);
     glutInitWindowSize(1024, 768);
-    glutCreateWindow("Project 06: CUDA Interop Boids (Naive O(N^2))");
+    glutCreateWindow("Project 06: CUDA Boids"); // Title will be updated by calculateFPS
 
-    // 2. Initialize GLEW
     glewInit();
-
-    // 3. Initialize Graphics & Compute
     initGL();
 
-    // 4. Register Callback & Start Loop
     glutDisplayFunc(display);
     glutMainLoop();
 
-    // 5. Cleanup
     cleanupCuda(cuda_vbo_resource);
     glDeleteVertexArrays(1, &vao);
     glDeleteBuffers(1, &vbo);
