@@ -209,14 +209,14 @@ __global__ void boids_grid_kernel(float4* pos_sorted, float4* vel_sorted,
         my_vel = mult(my_vel, c_maxSpeed / speed);
     }
 
+    my_pos = add(my_pos, my_vel);
+    my_pos.w = 1.0f; // Critical for OpenGL
+
     // Boundary Wrap
     if (my_pos.x > 1.0f) my_pos.x = -1.0f;
     if (my_pos.x < -1.0f) my_pos.x = 1.0f;
     if (my_pos.y > 1.0f) my_pos.y = -1.0f;
     if (my_pos.y < -1.0f) my_pos.y = 1.0f;
-
-    my_pos = add(my_pos, my_vel);
-    my_pos.w = 1.0f; // Critical for OpenGL
 
     // Store in original buffer (mapped to VBO)
     // We use the 'gridParticleIndex' to write back to the original slot?
