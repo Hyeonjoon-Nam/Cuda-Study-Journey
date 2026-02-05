@@ -6,8 +6,8 @@
 #include <stdio.h>
 
 // [Thrust] CUDA Standard Template Library for Sorting
-#include <thrust/device_vector.h>
 #include <thrust/sort.h>
+#include <thrust/device_ptr.h>
 
 // ------------------------------------------------------------------
 // Simulation Parameters & Grid Settings
@@ -245,7 +245,7 @@ __global__ void init_particles_kernel(float4* pos, float4* vel, int num_particle
 // ------------------------------------------------------------------
 void initCuda(cudaGraphicsResource** vbo_resource, unsigned int vbo, int num_particles) {
     cudaSetDevice(0);
-    cudaGraphicsGLRegisterBuffer(vbo_resource, vbo, cudaGraphicsMapFlagsNone);
+    cudaGraphicsGLRegisterBuffer(vbo_resource, vbo, cudaGraphicsMapFlagsWriteDiscard);
 
     // 1. Allocate main velocity buffer
     cudaMalloc((void**)&dev_vel, num_particles * sizeof(float4));
@@ -321,13 +321,14 @@ void runCuda(cudaGraphicsResource* vbo_resource, int num_particles, float time) 
 
 void cleanupCuda(cudaGraphicsResource* vbo_resource) {
     cudaGraphicsUnregisterResource(vbo_resource);
+
     if (dev_vel) cudaFree(dev_vel);
+    if (dev_pos_sorted) cudaFree(dev_pos_sorted);
+    if (dev_vel_sorted) cudaFree(dev_vel_sorted);
     
     // Free Grid Resources
     if (dev_gridParticleHash) cudaFree(dev_gridParticleHash);
     if (dev_gridParticleIndex) cudaFree(dev_gridParticleIndex);
     if (dev_cellStart) cudaFree(dev_cellStart);
     if (dev_cellEnd) cudaFree(dev_cellEnd);
-    if (dev_pos_sorted) cudaFree(dev_pos_sorted);
-    if (dev_vel_sorted) cudaFree(dev_vel_sorted);
 }

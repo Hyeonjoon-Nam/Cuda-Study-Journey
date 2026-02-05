@@ -1,12 +1,10 @@
 #include <GL/glew.h>
 #include <GL/freeglut.h>
-#include <iostream>
-#include <string> // Title update용
+#include <string> // Title update
 #include "kernel.cuh" 
 
 // OpenGL Handles
 GLuint vbo;
-GLuint vao;
 
 // CUDA Resource
 struct cudaGraphicsResource* cuda_vbo_resource;
@@ -25,9 +23,6 @@ int fps_frame_count = 0;
 int fps_time_base = 0;
 
 void initGL() {
-    glGenVertexArrays(1, &vao);
-    glBindVertexArray(vao);
-
     glGenBuffers(1, &vbo);
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
 
@@ -97,7 +92,6 @@ int main(int argc, char** argv) {
     glutMainLoop();
 
     cleanupCuda(cuda_vbo_resource);
-    glDeleteVertexArrays(1, &vao);
     glDeleteBuffers(1, &vbo);
 
     return 0;
