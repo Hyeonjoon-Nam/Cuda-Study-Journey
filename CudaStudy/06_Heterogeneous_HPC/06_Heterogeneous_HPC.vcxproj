@@ -117,7 +117,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(CudaToolkitIncludeDir)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(CudaToolkitIncludeDir);$(ProjectDir)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
@@ -131,14 +131,19 @@
     </CudaCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\SerialGateway\SerialPort.cpp" />
     <ClCompile Include="Simulation\main.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="Firmware\SimulatedInput.ino" />
     <None Include="packages.config" />
     <CudaCompile Include="Simulation\kernel.cu">
       <FileType>Document</FileType>
     </CudaCompile>
     <CudaCompile Include="Simulation\kernel.cuh" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\SerialGateway\SerialPort.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

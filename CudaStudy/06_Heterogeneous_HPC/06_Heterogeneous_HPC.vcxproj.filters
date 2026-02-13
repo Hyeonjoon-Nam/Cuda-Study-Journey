@@ -25,9 +25,15 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+    <None Include="Firmware\SimulatedInput.ino">
+      <Filter>Firmware</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Simulation\main.cpp">
+      <Filter>Simulation</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SerialGateway\SerialPort.cpp">
       <Filter>Simulation</Filter>
     </ClCompile>
   </ItemGroup>
@@ -38,5 +44,10 @@
     <CudaCompile Include="Simulation\kernel.cuh">
       <Filter>Simulation</Filter>
     </CudaCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\SerialGateway\SerialPort.h">
+      <Filter>Simulation</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

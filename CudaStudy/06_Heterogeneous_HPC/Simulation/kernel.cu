@@ -23,7 +23,7 @@ __constant__ float c_protectedRange = 0.01f;
 __constant__ float c_centeringFactor = 0.005f;
 __constant__ float c_avoidFactor = 0.05f;
 __constant__ float c_alignFactor = 0.05f;
-__constant__ float c_maxSpeed = 0.01f;
+__constant__ float c_maxSpeed = 0.002f;
 
 // ------------------------------------------------------------------
 // Global Memory Buffers (Device)
@@ -271,7 +271,28 @@ void initCuda(cudaGraphicsResource** vbo_resource, unsigned int vbo, int num_par
     cudaGraphicsUnmapResources(1, vbo_resource, 0);
 }
 
-void runCuda(cudaGraphicsResource* vbo_resource, int num_particles, float time) {
+void runCuda(cudaGraphicsResource* vbo_resource, int num_particles, float time, int sensorValue) {
+    // Normalize Sensor Value (0 ~ 1023 -> 0.0 ~ 1.0)
+    float t = sensorValue / 1023.0f;
+
+    // Map Sensor Value to Simulation Parameters
+    // Mode 0 (Gas-like): High Separation, Low Cohesion -> Dispersed
+    // Mode 1 (Liquid-like): Low Separation, High Cohesion -> Clustered
+
+    // Cohesion: 0.0 -> 0.08f (Stronger force for clustering)
+    float targetCohesion = t * 0.08f;
+
+    // Separation: 0.04f -> 0.002f (Reduce repulsion when clustering)
+    float targetSeparation = 0.04f * (1.0f - t) + 0.002f;
+
+    // Update GPU Constant Memory
+    cudaMemcpyToSymbol(c_centeringFactor, &targetCohesion, sizeof(float));
+    cudaMemcpyToSymbol(c_avoidFactor, &targetSeparation, sizeof(float));
+
+    // Visual Range is fixed to match Grid Size limit
+    float fixedRange = 0.03f;
+    cudaMemcpyToSymbol(c_visualRange, &fixedRange, sizeof(float));
+
     float4* dptr; // Mapped VBO (Position)
     size_t num_bytes;
 

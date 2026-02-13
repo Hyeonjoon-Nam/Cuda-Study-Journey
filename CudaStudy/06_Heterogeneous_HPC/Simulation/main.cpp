@@ -2,6 +2,9 @@
 #include <GL/freeglut.h>
 #include <string> // Title update
 #include "kernel.cuh" 
+#include <thread>
+#include <atomic>
+#include "SerialPort.h"
 
 // OpenGL Handles
 GLuint vbo;
@@ -9,13 +12,13 @@ GLuint vbo;
 // CUDA Resource
 struct cudaGraphicsResource* cuda_vbo_resource;
 
-// ------------------------------------------------------------------
-// [CHANGE] Massive Scale Up!
-// ------------------------------------------------------------------
-// From 64x64 (4,096) -> 512x512 (262,144 particles)
-// RTX 3070 should handle this easily with Uniform Grid.
-const int mesh_width = 512;
-const int mesh_height = 512;
+// 
+std::atomic<int> g_sensorValue = 0;
+
+// Simulation Settings
+// 128x128 = 16,384 particles (Best for visualization)
+const int mesh_width = 128;
+const int mesh_height = 128;
 const int num_particles = mesh_width * mesh_height;
 
 float anim_time = 0.0f;
@@ -50,11 +53,33 @@ void calculateFPS() {
     }
 }
 
+// Thread Worker for Serial Communication
+void serial_worker() {
+    const char* portname = "\\\\.\\COM3";
+    SerialPort arduino(portname);
+    char buffer[256];
+
+    while (true) {
+
+        if (arduino.isConnected()) {
+            if (arduino.readSerialPort(buffer, sizeof(buffer))) {
+                g_sensorValue = atoi(buffer);
+                // Optional: Print for debugging
+                printf("\nsensor value: %d", g_sensorValue.load());
+            }
+            Sleep(10); // Prevent CPU hogging
+        }
+    }
+}
+
 void display() {
     anim_time += 0.01f;
+    
+    glutSetOption(GLUT_ACTION_ON_WINDOW_CLOSE, GLUT_ACTION_GLUTMAINLOOP_RETURNS);
 
     // 1. CUDA Physics Update
-    runCuda(cuda_vbo_resource, num_particles, anim_time);
+    int current_sensor = g_sensorValue.load();
+    runCuda(cuda_vbo_resource, num_particles, anim_time, current_sensor);
 
     // 2. Render
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -64,7 +89,7 @@ void display() {
     glVertexPointer(4, GL_FLOAT, 0, (void*)0);
     glEnableClientState(GL_VERTEX_ARRAY);
 
-    // [CHANGE] Reduce point size because there are too many particles
+    // Set point size
     glPointSize(1.0f); 
     glColor3f(0.0f, 1.0f, 1.0f); // Cyan
     glDrawArrays(GL_POINTS, 0, num_particles);
@@ -85,12 +110,21 @@ int main(int argc, char** argv) {
     glutInitWindowSize(1024, 768);
     glutCreateWindow("Project 06: CUDA Boids"); // Title will be updated by calculateFPS
 
+    // Enable loop return on close
+    glutSetOption(GLUT_ACTION_ON_WINDOW_CLOSE, GLUT_ACTION_GLUTMAINLOOP_RETURNS);
+
     glewInit();
     initGL();
 
     glutDisplayFunc(display);
+
+    // Launch Serial Thread
+    std::thread receiver(serial_worker);
+    receiver.detach();
+
     glutMainLoop();
 
+    // Cleanup
     cleanupCuda(cuda_vbo_resource);
     glDeleteBuffers(1, &vbo);
 

@@ -1,8 +1,8 @@
 # Project 06: Heterogeneous HPC Simulation System
 
 ## Overview
-This project builds a **Full-Pipeline Control System** that integrates Bare-metal Hardware, a Network Gateway, and a CUDA HPC Simulation.
-Unlike standalone simulations, this system mimics an **Edge Computing** architecture where an external input node controls a massive particle simulation ($N \ge 100,000$) in real-time via a custom UDP protocol.
+This project builds a **Full-Pipeline Control System** that integrates Bare-metal Hardware and a CUDA HPC Simulation.
+The system mimics an **Embedded/HPC** architecture where an external input node controls a massive particle simulation ($N \ge 16,384$) in real-time via a dedicated hardware thread.
 
 **Target Hardware:**
 - **Host:** NVIDIA GeForce RTX 3070 Laptop GPU (46 SMs)
@@ -10,17 +10,17 @@ Unlike standalone simulations, this system mimics an **Edge Computing** architec
 
 ## System Architecture
 
-The system consists of three distinct layers connected via an optimized data pipeline.
+The system consists of three layers connected via a **Direct Memory Access (DMA) style** pipeline using multi-threading.
 
 ```mermaid
 graph LR
-    A[Input Node: Arduino] -- UART/Serial --> B[Gateway: C++ WinSock]
-    B -- UDP Socket --> C[HPC Core: CUDA Kernel]
+    A[Input Node: Arduino] -- UART/Serial --> B[HPC App: IO Thread]
+    B -- Atomic Memory --> C[HPC Core: CUDA Kernel]
     C -- Zero-Copy Interop --> D[Render: OpenGL]
 ```
 
 **(Text Representation)**
-`[Input Node: Arduino (Bare-metal)]` --(UART)--> `[Gateway: C++ App]` --(UDP)--> `[HPC Core: CUDA]` --(Interop)--> `[Render: OpenGL]`
+`[Input Node: Arduino]` --(UART)--> `[IO Thread: Serial Reader]` --(Atomic Sync)--> `[HPC Thread: CUDA Physics]` --(Interop)--> `[Render: OpenGL]`
 
 ## Implementation Goals
 
@@ -31,53 +31,46 @@ graph LR
     - **Thrust Sort:** Reordering particles to maximize memory coalescence.
     - **OpenGL Interop:** Zero-copy rendering to eliminate CPU-GPU bandwidth overhead.
 
-### 2. Middleware (Gateway Layer)
+### 2. System Integration (I/O Layer)
 - **Objective:** Asynchronous Data Pipeline.
-- **Strategy:** Decouple hardware polling from simulation rendering.
+- **Strategy:** **Multi-threading & Atomic Synchronization**.
 - **Mechanism:**
-    - **Multi-threading:** Separate threads for Serial I/O (Input) and UDP transmission.
-    - **Thread-safe Queue:** Utilizing `std::mutex` and `std::condition_variable` to prevent race conditions.
+    - **Thread Separation:** Decoupled `Serial I/O` thread from the `Rendering` thread to prevent blocking.
+    - **Variable Mapping:** Mapped physical sensor input (0~1023) to simulation physics (Cohesion/Separation forces).
 
 ### 3. Hardware (Input Layer)
 - **Objective:** Low-level Control.
 - **Strategy:** **Bare-metal Programming** (No Arduino Library).
-- **Mechanism:** Direct register manipulation of `UBRR` (UART) and `ADCSRA` (ADC) to demonstrate embedded proficiency.
+- **Mechanism:** (Phase 3 Planned) Direct register manipulation of `UBRR` (UART) and `ADCSRA` (ADC).
 
 ## 📂 Directory Structure
 
 ```text
 06_Heterogeneous_HPC/
-├── Firmware/           # [Input Node] Bare-metal C code for ATmega328P
-├── Gateway/            # [Middleware] C++ WinSock UDP Gateway
-└── Simulation/         # [HPC Core] CUDA & OpenGL Visualization
-    ├── kernel.cu       # Spatial Partitioning & Physics Kernels
-    └── main.cpp        # Rendering Loop & Network Receiver
+├── Firmware/           # Arduino Firmware (.ino)
+│   └── SimulatedInput/ # [Phase 2] Virtual Sensor Input Generator
+├── Simulation/         # [HPC Core] Main Application
+│   ├── kernel.cu       # CUDA Physics Kernels
+│   ├── main.cpp        # OpenGL Loop & Thread Management
+│   └── SerialPort.cpp  # Win32 Serial Communication Module
+└── SerialGateway/      # (Legacy) Standalone Serial Test Project
 ```
 
 ## 📅 Development Roadmap
 
 ### Phase 1: Core Engine (Complete)
-
 - [x] **Step 1: OpenGL Interop Setup (Zero-Copy Visualization)**
-    - Established CUDA-OpenGL shared memory pipeline.
-    - Verified basic rendering with Sine Wave kernel.
 - [x] **Step 2: Naive Boids Implementation ($O(N^2)$)**
-    - Implemented Cohesion, Separation, and Alignment rules.
-    - Verified simulation logic with 4,096 particles.
 - [x] **Step 3: Spatial Partitioning Optimization (Uniform Grid)**
-    - Implemented Spatial Hashing / Uniform Grid to optimize neighbor search ($O(N)$).
-    - Integrated Thrust library for parallel sorting.
     - **Performance Achieved:** 262,144 particles @ 60 FPS (RTX 3070).
 
-### Phase 2: System Integration (Next)
-
-- [ ] **Step 4: C++ UDP Gateway (Serial <-> Network Bridge)**
-- [ ] **Step 5: Thread-safe Network Receiver in Simulation**
+### Phase 2: System Integration (Complete)
+- [x] **Step 4: Serial Communication Module**
+    - Implemented `SerialPort` class using Win32 API.
+- [x] **Step 5: Multi-threaded Integration**
+    - Implemented `std::thread` worker for non-blocking I/O.
+    - Real-time mapping of sensor data to CUDA constant memory.
+    - **Result:** Dynamic Cohesion/Separation control via external hardware input.
 
 ### Phase 3: Hardware Control
-
 - [ ] **Step 6: Bare-metal Firmware Implementation (Register Level)**
-
-## Performance Analysis
-- **Naive O(N^2):** ~4,096 particles max before FPS drop.
-- **Uniform Grid O(N):** Stable 60 FPS at 262,144 particles.
