@@ -40,20 +40,21 @@ graph LR
 
 ### 3. Hardware (Input Layer)
 - **Objective:** Low-level Control.
-- **Strategy:** **Bare-metal Programming** (No Arduino Library).
-- **Mechanism:** (Phase 3 Planned) Direct register manipulation of `UBRR` (UART) and `ADCSRA` (ADC).
+- **Strategy:** **Bare-metal Programming** (Direct Register Access).
+- **Mechanism:** **Implemented (Phase 3)** Direct register manipulation of `UBRR` (UART) and `ADCSRA` (ADC) without standard Arduino libraries.
 
 ## 📂 Directory Structure
 
 ```text
 06_Heterogeneous_HPC/
-├── Firmware/           # Arduino Firmware (.ino)
-│   └── SimulatedInput/ # [Phase 2] Virtual Sensor Input Generator
-├── Simulation/         # [HPC Core] Main Application
-│   ├── kernel.cu       # CUDA Physics Kernels
-│   ├── main.cpp        # OpenGL Loop & Thread Management
-│   └── SerialPort.cpp  # Win32 Serial Communication Module
-└── SerialGateway/      # (Legacy) Standalone Serial Test Project
+├── Firmware/
+│   └── BareMetal_Potentiometer.ino  # [Phase 3] Register-level AVR Firmware
+├── Simulation/                      # [HPC Core] Main Application
+│   ├── kernel.cu                    # CUDA Physics Kernels
+│   ├── main.cpp                     # OpenGL Loop & Thread Management
+│   ├── SerialPort.h                 # Win32 Serial Header
+│   └── SerialPort.cpp               # Win32 Serial Implementation
+└── README.md                        # Documentation
 ```
 
 ## 📅 Development Roadmap
@@ -72,5 +73,7 @@ graph LR
     - Real-time mapping of sensor data to CUDA constant memory.
     - **Result:** Dynamic Cohesion/Separation control via external hardware input.
 
-### Phase 3: Hardware Control
-- [ ] **Step 6: Bare-metal Firmware Implementation (Register Level)**
+### Phase 3: Hardware Control (Complete)
+- [x] **Step 6: Bare-metal Firmware Implementation (Register Level)**
+    - Replaced `analogRead` with `ADMUX`/`ADCSRA` register control.
+    - Replaced `Serial.print` with `UBRR0`/`UDR0` UART control.
