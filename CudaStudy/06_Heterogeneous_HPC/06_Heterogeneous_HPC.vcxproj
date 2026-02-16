@@ -135,7 +135,7 @@
     <ClCompile Include="Simulation\main.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Firmware\SimulatedInput.ino" />
+    <None Include="Firmware\BareMetal_Potentiometer.ino" />
     <None Include="packages.config" />
     <CudaCompile Include="Simulation\kernel.cu">
       <FileType>Document</FileType>
