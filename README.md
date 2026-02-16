@@ -18,7 +18,7 @@ My goal is to understand the hardware architecture deeply and write highly optim
 | 03 | [Parallel Reduction](./CudaStudy/03_ParallelReduction) | Warp Divergence, Loop Unrolling, Volatile, Bank Conflicts | Done |
 | 04 | [N-Body Simulation](./CudaStudy/04_NBodySimulation) | Compute vs Memory Bound, Tiling, Thread Coarsening, Occupancy | Done |
 | 05 | Spatial Partitioning | Uniform Grid, Atomic Operations | Integrated into Project 06 |
-| 06 | [Heterogeneous HPC System](./CudaStudy/06_Heterogeneous_HPC) | CUDA-OpenGL Interop, Multi-threading, Serial I/O, Atomic Sync | **Phase 2 Complete** |
+| 06 | [Heterogeneous HPC System](./CudaStudy/06_Heterogeneous_HPC) | CUDA-OpenGL Interop, Multi-threading, Serial I/O, Atomic Sync | **Phase 3: Bare-Metal Integrated** |
 
 ---
 
@@ -51,4 +51,5 @@ graph LR
     * **Dynamic Parameter Mapping:** Mapping physical input (0~1023) to simulation physics (Cohesion/Separation forces) in real-time.
 
 3.  **Embedded Interface (Bare-metal C):**
-    * (Planned Phase 3) Programming ATmega328P using **Raw Register Access** (adhering to bare-metal constraints) to control simulation parameters via physical hardware inputs.
+    * **Implemented (Phase 3):** Programmed ATmega328P using **Raw Register Access** (replacing standard libraries like `analogRead` and `Serial`) to control simulation parameters via physical hardware inputs.
+    * **Direct Control:** Configured `ADMUX`, `ADCSRA` for ADC control and `UBRR0`, `UDR0` for UART communication to understand low-level hardware constraints.
