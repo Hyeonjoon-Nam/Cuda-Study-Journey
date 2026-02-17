@@ -1,6 +1,7 @@
 # Project 06: Heterogeneous HPC Simulation System
 
 ![Demo](./assets/demo.gif)
+
 *(Real-time Boids Simulation controlled by Bare-metal Arduino Input)*
 
 ## Overview
