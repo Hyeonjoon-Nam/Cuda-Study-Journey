@@ -27,7 +27,7 @@ My goal is to understand the hardware architecture deeply and write highly optim
 Moving beyond standalone simulations, this project aims to build a comprehensive control pipeline that bridges **Low-level Hardware**, **System Programming**, and **High-Performance Computing**.
 
 ### System Architecture
-The system simulates an **Edge Computing** environment where an external input node controls a massive particle simulation in real-time via a dedicated I/O thread.
+The system simulates an **Edge Computing** environment where an external input node controls a massive particle simulation ($N=16,384$) in real-time via a dedicated I/O thread.
 
 ```mermaid
 graph LR
@@ -39,17 +39,31 @@ graph LR
 **(Text Representation)**
 `[Input Node: Arduino]` --(UART)--> `[IO Thread: Serial Reader]` --(Atomic Memory)--> `[HPC Core: CUDA Kernel]` --(Interop)--> `[Render: OpenGL]`
 
-### Key Technical Objectives
+### Key Technical Objectives & Results
+- **HPC Core (CUDA & OpenGL):** Zero-copy rendering with Spatial Partitioning (Uniform Grid) for real-time performance.
+- **System Integration (C++):** Decoupled Hardware I/O from Rendering Loop using `std::thread` & `std::atomic` (Lock-free sync).
+- **Embedded Interface (Bare-metal):** **Phase 3 Implemented.** Direct register manipulation (`ADMUX`, `UBRR0`) replacing standard Arduino libraries.
 
-1.  **HPC Core (CUDA & OpenGL):**
-    * Optimizing Massive Boids simulation (16k+ particles) using **Spatial Partitioning (Uniform Grid)** and **Thrust** sort (Radix Sort).
-    * Implementing **CUDA-OpenGL Interoperability** to achieve zero-copy rendering, eliminating CPU-GPU bandwidth bottlenecks.
+**[View Full Project & Code](./CudaStudy/06_Heterogeneous_HPC)**
 
-2.  **System Integration (C++):**
-    * **Multi-threaded Architecture:** Decoupling the Hardware I/O (Serial) from the Rendering Loop using `std::thread` to ensure stable FPS.
-    * **Lock-free Synchronization:** Utilizing `std::atomic` to safely transfer sensor data between the I/O thread and CUDA kernel without mutex overhead.
-    * **Dynamic Parameter Mapping:** Mapping physical input (0~1023) to simulation physics (Cohesion/Separation forces) in real-time.
+---
 
-3.  **Embedded Interface (Bare-metal C):**
-    * **Implemented (Phase 3):** Programmed ATmega328P using **Raw Register Access** (replacing standard libraries like `analogRead` and `Serial`) to control simulation parameters via physical hardware inputs.
-    * **Direct Control:** Configured `ADMUX`, `ADCSRA` for ADC control and `UBRR0`, `UDR0` for UART communication to understand low-level hardware constraints.
+## Future Roadmap: Phase 2
+Moving towards **3D Graphics, Texture Memory, and Vision AI**.
+
+I have categorized my next goals into two parallel tracks to balance software depth and system breadth.
+
+### Track A: Simulation Engine (Software Depth)
+Focusing on advanced CUDA memory patterns and 3D graphics.
+- **Conway's Game of Life:**
+    - Implement Cellular Automata using **CUDA Texture Memory** to optimize non-coalesced memory access patterns.
+- **3D Simulation:**
+    - Expand the kernel to 3D space (`float4`) and implement **Camera Matrices (View/Projection)** in OpenGL.
+
+### Track B: Physical Interaction (System Breadth)
+Focusing on Edge AI and Wireless Networking using **ESP32-S3 CAM**.
+- **Networked Architecture:**
+    - Transition from USB Serial to **UDP/Wi-Fi Communication**, implementing a C++ Socket Server.
+- **Vision AI Control:**
+    - Replace the analog potentiometer with **Computer Vision**.
+    - Implement **TinyML** on the ESP32 to recognize Hand Gestures (e.g., Open Palm = Scatter, Fist = Gather).

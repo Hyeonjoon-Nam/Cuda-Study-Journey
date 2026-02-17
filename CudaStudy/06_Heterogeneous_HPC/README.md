@@ -1,5 +1,8 @@
 # Project 06: Heterogeneous HPC Simulation System
 
+![Demo](./assets/demo.gif)
+*(Real-time Boids Simulation controlled by Bare-metal Arduino Input)*
+
 ## Overview
 This project builds a **Full-Pipeline Control System** that integrates Bare-metal Hardware and a CUDA HPC Simulation.
 The system mimics an **Embedded/HPC** architecture where an external input node controls a massive particle simulation ($N \ge 16,384$) in real-time via a dedicated hardware thread.
@@ -43,7 +46,7 @@ graph LR
 - **Strategy:** **Bare-metal Programming** (Direct Register Access).
 - **Mechanism:** **Implemented (Phase 3)** Direct register manipulation of `UBRR` (UART) and `ADCSRA` (ADC) without standard Arduino libraries.
 
-## 📂 Directory Structure
+## Directory Structure
 
 ```text
 06_Heterogeneous_HPC/
