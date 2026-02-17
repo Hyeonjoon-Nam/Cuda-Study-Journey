@@ -54,6 +54,7 @@ graph LR
 │   └── BareMetal_Potentiometer.ino  # [Phase 3] Register-level AVR Firmware
 ├── Simulation/                      # [HPC Core] Main Application
 │   ├── kernel.cu                    # CUDA Physics Kernels
+│   ├── kernel.cuh
 │   ├── main.cpp                     # OpenGL Loop & Thread Management
 │   ├── SerialPort.h                 # Win32 Serial Header
 │   └── SerialPort.cpp               # Win32 Serial Implementation
@@ -66,7 +67,7 @@ graph LR
 - [x] **Step 1: OpenGL Interop Setup (Zero-Copy Visualization)**
 - [x] **Step 2: Naive Boids Implementation ($O(N^2)$)**
 - [x] **Step 3: Spatial Partitioning Optimization (Uniform Grid)**
-    - **Performance Achieved:** 262,144 particles @ 60 FPS (RTX 3070).
+    - **Performance Achieved:** 262,144 particles @ ~50 FPS (RTX 3070).
 
 ### Phase 2: System Integration (Complete)
 - [x] **Step 4: Serial Communication Module**
@@ -93,3 +94,25 @@ To verify the efficiency of the **Heterogeneous System Architecture**, I profile
 * **Zero I/O Overhead:** The `boids_grid_kernel` execution time remained consistent at **~60µs** (compare Loop 1 vs Loop 2), proving that the asynchronous I/O thread (`std::thread`) successfully decoupled UART communication from the CUDA/OpenGL rendering loop.
 * **Stable Latency:** Despite the continuous hardware interrupts from the microcontroller, the GPU simulation pipeline maintained a steady frame rate without stalling.
 * **Compute Bound:** The Uniform Grid optimization successfully shifted the bottleneck from global memory access to compute, achieving high throughput even with 16,384 particles.
+
+### Scalability & Stress Test (Pushing the Limits)
+
+To evaluate the robustness of the system, I scaled the simulation from 16K to over 4 million particles. This stress test reveals how the architecture handles extreme computational loads.
+
+| Particle Count | Resolution | Performance | Compute Throughput |
+| :--- | :--- | :--- | :--- |
+| **16,384** | 128 x 128 | **~9,000+ FPS** (0.06ms) | 25.3% |
+| **1,048,576** | 1024 x 1024 | **~50 FPS** (31.3ms) | **85.2%** |
+| **4,194,304** | 2048 x 2048 | **~3 FPS** (500ms) | 85.1% |
+
+**Key Insights & Lessons Learned:**
+
+1. **Efficiency of Spatial Partitioning:**
+   As the data size increased to 1M particles, the **Compute Throughput spiked to 85%**. This proves that the *Uniform Grid* optimization effectively eliminated memory bottlenecks, allowing the GPU's Streaming Multiprocessors (SM) to focus almost entirely on physics calculations.
+
+2. **The Hardware Threshold:**
+   At 1M particles (1024x1024), the system still maintains an interactive frame rate (~50 FPS). However, at 4M particles, we hit the hardware limit of the RTX 3070 Laptop GPU. Profiling shows that while the kernels are still compute-bound, the sheer volume of $O(N)$ operations exceeds the real-time processing budget.
+
+3. **Bottleneck Transition:**
+   - **Small Scale (16K):** Bottleneck is Latency (I/O & Driver overhead). GPU is "underutilized" but extremely responsive.
+   - **Large Scale (1M+):** Bottleneck is Throughput (Compute). GPU is "fully utilized" (85% throughput).
