@@ -60,7 +60,7 @@ graph LR
 └── README.md                        # Documentation
 ```
 
-## 📅 Development Roadmap
+## Development Roadmap
 
 ### Phase 1: Core Engine (Complete)
 - [x] **Step 1: OpenGL Interop Setup (Zero-Copy Visualization)**
@@ -80,3 +80,16 @@ graph LR
 - [x] **Step 6: Bare-metal Firmware Implementation (Register Level)**
     - Replaced `analogRead` with `ADMUX`/`ADCSRA` register control.
     - Replaced `Serial.print` with `UBRR0`/`UDR0` UART control.
+
+
+### Performance Analysis (Validated via Nsight Compute)
+
+To verify the efficiency of the **Heterogeneous System Architecture**, I profiled the application while the **Arduino was actively sending data** via UART.
+
+![Nsight Profiling Result](./assets/nsight_profiling_active_io.png)
+*(Profiling Data: Kernel execution during active Serial I/O)*
+
+**Key Findings:**
+* **Zero I/O Overhead:** The `boids_grid_kernel` execution time remained consistent at **~60µs** (compare Loop 1 vs Loop 2), proving that the asynchronous I/O thread (`std::thread`) successfully decoupled UART communication from the CUDA/OpenGL rendering loop.
+* **Stable Latency:** Despite the continuous hardware interrupts from the microcontroller, the GPU simulation pipeline maintained a steady frame rate without stalling.
+* **Compute Bound:** The Uniform Grid optimization successfully shifted the bottleneck from global memory access to compute, achieving high throughput even with 16,384 particles.
