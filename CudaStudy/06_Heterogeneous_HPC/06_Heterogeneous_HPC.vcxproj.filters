@@ -22,7 +22,7 @@
     <ClCompile Include="Simulation\main.cpp">
       <Filter>Simulation</Filter>
     </ClCompile>
-    <ClCompile Include="..\SerialGateway\SerialPort.cpp">
+    <ClCompile Include="Simulation\SerialPort.cpp">
       <Filter>Simulation</Filter>
     </ClCompile>
   </ItemGroup>
@@ -35,7 +35,7 @@
     </CudaCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\SerialGateway\SerialPort.h">
+    <ClInclude Include="Simulation\SerialPort.h">
       <Filter>Simulation</Filter>
     </ClInclude>
   </ItemGroup>

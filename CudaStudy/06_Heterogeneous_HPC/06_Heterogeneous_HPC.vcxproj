@@ -131,8 +131,8 @@
     </CudaCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\SerialGateway\SerialPort.cpp" />
     <ClCompile Include="Simulation\main.cpp" />
+    <ClCompile Include="Simulation\SerialPort.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Firmware\BareMetal_Potentiometer.ino" />
@@ -143,7 +143,7 @@
     <CudaCompile Include="Simulation\kernel.cuh" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\SerialGateway\SerialPort.h" />
+    <ClInclude Include="Simulation\SerialPort.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
