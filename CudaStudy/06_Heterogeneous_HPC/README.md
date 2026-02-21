@@ -88,7 +88,7 @@ graph LR
 
 To verify the efficiency of the **Heterogeneous System Architecture**, I profiled the application while the **Arduino was actively sending data** via UART.
 
-![Nsight Profiling Result](./assets/nsight_profiling_active_io.png)
+![Nsight Profiling Result](./assets/nsight_profiling_4M.png)
 *(Profiling Data: Kernel execution during active Serial I/O)*
 
 **Key Findings:**
