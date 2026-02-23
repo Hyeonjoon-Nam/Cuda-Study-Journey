@@ -58,7 +58,7 @@ Breaking the physical constraints of USB serial communication by introducing **U
 - **Software:** Implementing a Native C++ WinSock2 UDP Receiver on a dedicated thread.
 - **Objective:** Maintain a strict 60FPS lock-free simulation pipeline despite inherent network jitter and packet loss.
 
-### Goal 2: Logistics Swarm Simulator (GDC 2026 Showcase)
+### Goal 2: Logistics Swarm Simulator
 A massive Multi-Agent Pathfinding (MAPF) simulation mimicking thousands of AGVs (Automated Guided Vehicles) in a warehouse environment.
 - **HPC Routing:** Transitioning from individual A* to **Vector Flow Fields** (Reverse BFS) to achieve $O(1)$ path lookup for massive agent counts.
 - **Local Avoidance:** Implementing GPU-accelerated collision avoidance (Separation / Tangential Forces) to resolve traffic deadlocks in narrow corridors.
