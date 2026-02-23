@@ -48,22 +48,24 @@ graph LR
 
 ---
 
-## Future Roadmap: Phase 2
-Moving towards **3D Graphics, Texture Memory, and Vision AI**.
+## Future Roadmap: From Simulation to Solution
 
-I have categorized my next goals into two parallel tracks to balance software depth and system breadth.
+Having pushed the limits of hardware optimization with 4M+ particle simulations, my next phase pivots from "Tech Demos" to **"Real-World Problem Solving."** Drawing inspiration from real-world warehouse logistics (e.g., Amazon, Coupang), the upcoming roadmap focuses on massive-scale pathfinding, wireless telemetry, and framework architecture.
 
-### Track A: Simulation Engine (Software Depth)
-Focusing on advanced CUDA memory patterns and 3D graphics.
-- **Conway's Game of Life:**
-    - Implement Cellular Automata using **CUDA Texture Memory** to optimize non-coalesced memory access patterns.
-- **3D Simulation:**
-    - Expand the kernel to 3D space (`float4`) and implement **Camera Matrices (View/Projection)** in OpenGL.
+### Goal 1: Wireless Edge Integration (Project 06 Polish)
+Breaking the physical constraints of USB serial communication by introducing **UDP/Wi-Fi Telemetry**.
+- **Hardware:** ESP32 (SoftAP Mode) serving as an independent wireless control node.
+- **Software:** Implementing a Native C++ WinSock2 UDP Receiver on a dedicated thread.
+- **Objective:** Maintain a strict 60FPS lock-free simulation pipeline despite inherent network jitter and packet loss.
 
-### Track B: Physical Interaction (System Breadth)
-Focusing on Edge AI and Wireless Networking using **ESP32-S3 CAM**.
-- **Networked Architecture:**
-    - Transition from USB Serial to **UDP/Wi-Fi Communication**, implementing a C++ Socket Server.
-- **Vision AI Control:**
-    - Replace the analog potentiometer with **Computer Vision**.
-    - Implement **TinyML** on the ESP32 to recognize Hand Gestures (e.g., Open Palm = Scatter, Fist = Gather).
+### Goal 2: Logistics Swarm Simulator (GDC 2026 Showcase)
+A massive Multi-Agent Pathfinding (MAPF) simulation mimicking thousands of AGVs (Automated Guided Vehicles) in a warehouse environment.
+- **HPC Routing:** Transitioning from individual A* to **Vector Flow Fields** (Reverse BFS) to achieve $O(1)$ path lookup for massive agent counts.
+- **Local Avoidance:** Implementing GPU-accelerated collision avoidance (Separation / Tangential Forces) to resolve traffic deadlocks in narrow corridors.
+- **Objective:** Visually demonstrate real-time throughput optimization for thousands of autonomous units on a single GPU.
+
+### Goal 3: Unified HPC Sandbox Architecture
+Consolidating standalone projects into a single, cohesive engine framework.
+- **Framework:** Integrating **Dear ImGui** over the GLFW/OpenGL pipeline.
+- **System Design:** Abstracting simulations into a `Scene` management system for runtime hot-swapping.
+- **Objective:** Build a recruiter-ready interactive sandbox featuring real-time performance metrics (Throughput, Latency) and parameter tuning.
