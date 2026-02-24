@@ -69,3 +69,9 @@ Consolidating standalone projects into a single, cohesive engine framework.
 - **Framework:** Integrating **Dear ImGui** over the GLFW/OpenGL pipeline.
 - **System Design:** Abstracting simulations into a `Scene` management system for runtime hot-swapping.
 - **Objective:** Build a recruiter-ready interactive sandbox featuring real-time performance metrics (Throughput, Latency) and parameter tuning.
+
+### Goal 4: Cross-Platform HPC Deployment (AMD ROCm)
+Expanding the system's hardware abstraction by porting the CUDA-based simulation to the **AMD ROCm (HIP)** ecosystem.
+- **Environment:** AMD Developer Cloud (Instinct Accelerators).
+- **Porting:** Utilizing `HIPIFY` to translate CUDA kernels into HIP, ensuring architectural compatibility (Warp vs. Wavefront).
+- **Objective:** Cross-validate the simulation's throughput across different GPU architectures, proving the algorithm's platform-independent efficiency.
