@@ -2,29 +2,36 @@
 
 ![Demo](./assets/demo.gif)
 
-*(Real-time Boids Simulation controlled by Bare-metal Arduino Input)*
+*(Real-time Boids Simulation controlled by Wireless ESP32 or Bare-metal Arduino Input)*
 
 ## Overview
-This project builds a **Full-Pipeline Control System** that integrates Bare-metal Hardware and a CUDA HPC Simulation.
+This project builds a **Full-Pipeline Control System** that integrates External Hardware and a CUDA HPC Simulation.
 The system mimics an **Embedded/HPC** architecture where an external input node controls a massive particle simulation ($N \ge 16,384$) in real-time via a dedicated hardware thread.
 
 **Target Hardware:**
 - **Host:** NVIDIA GeForce RTX 3070 Laptop GPU (46 SMs)
-- **Input Node:** Arduino Uno (ATmega328P) - *Bare-metal Mode*
+- **Wireless Node:** ESP32-S3 (Dual-core, Wi-Fi/BT) - *Wireless Mode*
+- **Legacy Node:** Arduino Uno (ATmega328P) - *Bare-metal Mode*
 
 ## System Architecture
 
-The system consists of three layers connected via a **Direct Memory Access (DMA) style** pipeline using multi-threading.
+The system consists of three layers connected via a **Direct Memory Access (DMA) style** pipeline supporting dual-mode communication.
 
 ```mermaid
 graph LR
-    A[Input Node: Arduino] -- UART/Serial --> B[HPC App: IO Thread]
-    B -- Atomic Memory --> C[HPC Core: CUDA Kernel]
-    C -- Zero-Copy Interop --> D[Render: OpenGL]
+    subgraph Input_Layer
+        A[ESP32-S3] -- "UDP (Wi-Fi)" --> B
+        E[Arduino Uno] -- "UART (Serial)" --> B
+    end
+    
+    subgraph Host_App
+        B[HPC App: IO Thread] -- Atomic Memory --> C[HPC Core: CUDA Kernel]
+        C -- Zero-Copy Interop --> D[Render: OpenGL]
+    end
 ```
 
 **(Text Representation)**
-`[Input Node: Arduino]` --(UART)--> `[IO Thread: Serial Reader]` --(Atomic Sync)--> `[HPC Thread: CUDA Physics]` --(Interop)--> `[Render: OpenGL]`
+`[Input Node]` --(UDP/UART)--> `[IO Thread: Receiver]` --(Atomic Sync)--> `[HPC Thread: CUDA Physics]` --(Interop)--> `[Render: OpenGL]`
 
 ## Implementation Goals
 
@@ -36,30 +43,29 @@ graph LR
     - **OpenGL Interop:** Zero-copy rendering to eliminate CPU-GPU bandwidth overhead.
 
 ### 2. System Integration (I/O Layer)
-- **Objective:** Asynchronous Data Pipeline.
-- **Strategy:** **Multi-threading & Atomic Synchronization**.
+- **Objective:** Asynchronous & Wireless Data Pipeline.
 - **Mechanism:**
-    - **Thread Separation:** Decoupled `Serial I/O` thread from the `Rendering` thread to prevent blocking.
-    - **Variable Mapping:** Mapped physical sensor input (0~1023) to simulation physics (Cohesion/Separation forces).
+    - **Multi-threaded I/O:** Decoupled `UdpReceiver`/`SerialPort` thread from the `Rendering` thread.
+    - **Wireless Integration:** Native C++ **WinSock2 UDP Receiver** handling ESP32 telemetry packets.
+    - **Atomic Synchronization:** Thread-safe data sharing using `std::atomic<int>`.
 
 ### 3. Hardware (Input Layer)
-- **Objective:** Low-level Control.
-- **Strategy:** **Bare-metal Programming** (Direct Register Access).
-- **Mechanism:** **Implemented (Phase 3)** Direct register manipulation of `UBRR` (UART) and `ADCSRA` (ADC) without standard Arduino libraries.
+- **Wireless Mode:** ESP32-S3 acting as a **SoftAP** broadcasting telemetry data at 100Hz.
+- **Bare-metal Mode:** Direct register manipulation of `UBRR` and `ADCSRA` for raw hardware control.
 
 ## Directory Structure
 
 ```text
 06_Heterogeneous_HPC/
 ├── Firmware/
-│   └── BareMetal_Potentiometer.ino  # [Phase 3] Register-level AVR Firmware
-├── Simulation/                      # [HPC Core] Main Application
-│   ├── kernel.cu                    # CUDA Physics Kernels
-│   ├── kernel.cuh
-│   ├── main.cpp                     # OpenGL Loop & Thread Management
-│   ├── SerialPort.h                 # Win32 Serial Header
-│   └── SerialPort.cpp               # Win32 Serial Implementation
-└── README.md                        # Documentation
+│   ├── Wireless_Potentiometer_UDP.ino   # [Modern] ESP32 UDP Telemetry
+│   └── BareMetal_Potentiometer.ino      # [Legacy] Register-level AVR Firmware
+├── Simulation/                           # [HPC Core] Main Application
+│   ├── UdpReceiver.h / .cpp              # WinSock2 UDP Implementation
+│   ├── SerialPort.h / .cpp               # Win32 Serial Implementation
+│   ├── kernel.cu / .cuh                  # CUDA Physics Kernels
+│   └── main.cpp                         # OpenGL Loop & Threading
+└── README.md
 ```
 
 ## Development Roadmap
@@ -83,22 +89,24 @@ graph LR
     - Replaced `analogRead` with `ADMUX`/`ADCSRA` register control.
     - Replaced `Serial.print` with `UBRR0`/`UDR0` UART control.
 
+### [New] Wireless Modernization (Complete)
+- [x] **Step 1: ESP32-S3 SoftAP Infrastructure**
+- [x] **Step 2: WinSock2 UDP Receiver Threading**
+- [x] **Step 3: Real-time Wireless Telemetry Mapping**
+
 
 ### Performance Analysis (Validated via Nsight Compute)
 
-To verify the efficiency of the **Heterogeneous System Architecture**, I profiled the application while the **Arduino was actively sending data** via UART.
+To verify the efficiency of the **Heterogeneous System Architecture**, I profiled the application while the hardware was actively sending data.
 
 ![Nsight Profiling Result](./assets/nsight_profiling_4M.png)
-*(Profiling Data: Kernel execution during active Serial I/O)*
+*(Profiling Data: Kernel execution during active I/O activity)*
 
 **Key Findings:**
-* **Zero I/O Overhead:** The `boids_grid_kernel` execution time remained consistent at **~60µs** (compare Loop 1 vs Loop 2), proving that the asynchronous I/O thread (`std::thread`) successfully decoupled UART communication from the CUDA/OpenGL rendering loop.
-* **Stable Latency:** Despite the continuous hardware interrupts from the microcontroller, the GPU simulation pipeline maintained a steady frame rate without stalling.
-* **Compute Bound:** The Uniform Grid optimization successfully shifted the bottleneck from global memory access to compute, achieving high throughput even with 16,384 particles.
+* **Zero I/O Overhead:** The execution time remained consistent regardless of incoming telemetry, proving successful thread decoupling.
+* **Stable Latency:** Despite continuous network packets or hardware interrupts, the GPU simulation pipeline maintained a steady frame rate.
 
 ### Scalability & Stress Test (Pushing the Limits)
-
-To evaluate the robustness of the system, I scaled the simulation from 16K to over 4 million particles. This stress test reveals how the architecture handles extreme computational loads.
 
 | Particle Count | Resolution | Performance | Compute Throughput |
 | :--- | :--- | :--- | :--- |
@@ -107,13 +115,8 @@ To evaluate the robustness of the system, I scaled the simulation from 16K to ov
 | **4,194,304** | 2048 x 2048 | **~3 FPS** (500ms) | 85.1% |
 
 **Key Insights & Lessons Learned:**
-
-1. **Efficiency of Spatial Partitioning:**
-   As the data size increased to 1M particles, the **Compute Throughput spiked to 85%**. This proves that the *Uniform Grid* optimization effectively eliminated memory bottlenecks, allowing the GPU's Streaming Multiprocessors (SM) to focus almost entirely on physics calculations.
-
-2. **The Hardware Threshold:**
-   At 1M particles (1024x1024), the system still maintains an interactive frame rate (~50 FPS). However, at 4M particles, we hit the hardware limit of the RTX 3070 Laptop GPU. Profiling shows that while the kernels are still compute-bound, the sheer volume of $O(N)$ operations exceeds the real-time processing budget.
-
+1. **Efficiency of Spatial Partitioning:** Compute Throughput spikes to 85% at 1M particles, proving the grid optimization effectively eliminated memory bottlenecks.
+2. **The Hardware Threshold:** 1M particles is the real-time threshold for the RTX 3070 Laptop GPU (~50 FPS).
 3. **Bottleneck Transition:**
-   - **Small Scale (16K):** Bottleneck is Latency (I/O & Driver overhead). GPU is "underutilized" but extremely responsive.
-   - **Large Scale (1M+):** Bottleneck is Throughput (Compute). GPU is "fully utilized" (85% throughput).
+    - **Small Scale (16K):** Bottleneck is Latency (I/O & Driver overhead).
+    - **Large Scale (1M+):** Bottleneck is Throughput (Compute).
