@@ -1,11 +1,13 @@
 #include <GL/glew.h>
 #include <GL/freeglut.h>
 #include <string> 
-#include "kernel.cuh" 
 #include <thread>
 #include <atomic>
-#include "SerialPort.h"
 #include <iostream>
+
+#include "kernel.cuh" 
+#include "SerialPort.h" // Retaining for legacy support
+#include "UdpReceiver.h"
 
 // OpenGL Handles
 GLuint vbo;
@@ -113,6 +115,34 @@ void serial_worker() {
     }
 }
 
+void udp_worker() {
+    unsigned short port = 8888;
+
+    UdpReceiver esp32(port);
+
+    if (!esp32.isConnected()) {
+        std::cerr << "ERROR: Failed to initialize UDP receiver. Check the port number." << std::endl;
+        return;
+    }
+
+    char buffer[256];
+    while (esp32.isConnected()) {
+        // Blocks until a wireless packet is received
+        int bytesRead = esp32.readUDP(buffer, sizeof(buffer));
+
+        if (bytesRead > 0) {
+            try {
+                // Parse the numerical string and update shared state
+                int val = std::stoi(buffer);
+                g_sensorValue.store(val);
+            }
+            catch (...) {
+                // Ignore corrupted or malformed packets to maintain stability
+            }
+        }
+    }
+}
+
 void display() {
     anim_time += 0.01f;
 
@@ -160,7 +190,7 @@ int main(int argc, char** argv) {
     glutDisplayFunc(display);
 
     // Launch Serial Thread independently so it doesn't block the OpenGL render loop
-    std::thread receiver(serial_worker);
+    std::thread receiver(udp_worker); // Change to serial_worker to restore the legacy serial port
     receiver.detach();
 
     glutMainLoop();

@@ -17,12 +17,18 @@
     <None Include="Firmware\BareMetal_Potentiometer.ino">
       <Filter>Firmware</Filter>
     </None>
+    <None Include="Firmware\Wireless_Potentiometer_UDP.ino">
+      <Filter>Firmware</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Simulation\main.cpp">
       <Filter>Simulation</Filter>
     </ClCompile>
     <ClCompile Include="Simulation\SerialPort.cpp">
+      <Filter>Simulation</Filter>
+    </ClCompile>
+    <ClCompile Include="Simulation\UdpReceiver.cpp">
       <Filter>Simulation</Filter>
     </ClCompile>
   </ItemGroup>
@@ -36,6 +42,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Simulation\SerialPort.h">
+      <Filter>Simulation</Filter>
+    </ClInclude>
+    <ClInclude Include="Simulation\UdpReceiver.h">
       <Filter>Simulation</Filter>
     </ClInclude>
   </ItemGroup>

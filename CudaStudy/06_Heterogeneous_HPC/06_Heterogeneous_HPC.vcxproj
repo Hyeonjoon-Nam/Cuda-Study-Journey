@@ -133,9 +133,11 @@
   <ItemGroup>
     <ClCompile Include="Simulation\main.cpp" />
     <ClCompile Include="Simulation\SerialPort.cpp" />
+    <ClCompile Include="Simulation\UdpReceiver.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Firmware\BareMetal_Potentiometer.ino" />
+    <None Include="Firmware\Wireless_Potentiometer_UDP.ino" />
     <None Include="packages.config" />
     <CudaCompile Include="Simulation\kernel.cu">
       <FileType>Document</FileType>
@@ -144,6 +146,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Simulation\SerialPort.h" />
+    <ClInclude Include="Simulation\UdpReceiver.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
