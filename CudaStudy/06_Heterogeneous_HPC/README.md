@@ -70,29 +70,26 @@ graph LR
 
 ## Development Roadmap
 
-### Phase 1: Core Engine (Complete)
-- [x] **Step 1: OpenGL Interop Setup (Zero-Copy Visualization)**
-- [x] **Step 2: Naive Boids Implementation ($O(N^2)$)**
-- [x] **Step 3: Spatial Partitioning Optimization (Uniform Grid)**
-    - **Performance Achieved:** 262,144 particles @ ~50 FPS (RTX 3070).
+### Milestone 1: Infrastructure & System Integration (Complete)
+*This milestone focused on building a robust, low-latency data pipeline between external hardware and the GPU.*
+- [x] **Core Simulation Engine:** Implemented $O(N)$ Spatial Partitioning (Uniform Grid) and Zero-copy CUDA-OpenGL interop.
+- [x] **Asynchronous I/O Pipeline:** Developed a non-blocking multi-threaded system using `std::thread` and `std::atomic`.
+- [x] **Hybrid Hardware Support:**
+    - **Wireless Mode:** Integrated ESP32-S3 (SoftAP) with C++ WinSock2 UDP receiver.
+    - **Bare-metal Mode:** Optimized legacy Arduino Uno control using direct register access (AVR).
 
-### Phase 2: System Integration (Complete)
-- [x] **Step 4: Serial Communication Module**
-    - Implemented `SerialPort` class using Win32 API.
-- [x] **Step 5: Multi-threaded Integration**
-    - Implemented `std::thread` worker for non-blocking I/O.
-    - Real-time mapping of sensor data to CUDA constant memory.
-    - **Result:** Dynamic Cohesion/Separation control via external hardware input.
-
-### Phase 3: Hardware Control (Complete)
-- [x] **Step 6: Bare-metal Firmware Implementation (Register Level)**
-    - Replaced `analogRead` with `ADMUX`/`ADCSRA` register control.
-    - Replaced `Serial.print` with `UBRR0`/`UDR0` UART control.
-
-### [New] Wireless Modernization (Complete)
-- [x] **Step 1: ESP32-S3 SoftAP Infrastructure**
-- [x] **Step 2: WinSock2 UDP Receiver Threading**
-- [x] **Step 3: Real-time Wireless Telemetry Mapping**
+### Milestone 2: Logistics Swarm Simulation (In Progress)
+*Transforming simple boids into goal-oriented AGVs (Automated Guided Vehicles) for warehouse logistics.*
+- [ ] **Step 1: Grid-based Warehouse Map Definition**
+    - Define static obstacles (racks, walls) and navigable paths for agents.
+- [ ] **Step 2: Vector Flow Field Pathfinding**
+    - Implement Dijkstra/BFS-based Flow Field for $O(1)$ path lookup on GPU kernels.
+- [ ] **Step 3: Collision Avoidance & Traffic Control**
+    - Integrate tangential forces to resolve traffic deadlocks in narrow warehouse corridors.
+- [ ] **Step 4: Real-time Goal Assignment via ESP32**
+    - Map wireless dial input to dynamic goal selection or simulation speed control.
+- [ ] **Step 5: Multi-color State Visualization**
+    - Differentiate robots by their operational states (Idle, Navigating, Task Completed).
 
 
 ### Performance Analysis (Validated via Nsight Compute)
