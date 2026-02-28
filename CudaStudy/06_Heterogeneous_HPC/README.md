@@ -108,7 +108,7 @@ To verify the efficiency of the **Heterogeneous System Architecture**, I profile
 | Particle Count | Resolution | Performance | Compute Throughput |
 | :--- | :--- | :--- | :--- |
 | **16,384** | 128 x 128 | **~9,000+ FPS** (0.06ms) | 25.3% |
-| **1,048,576** | 1024 x 1024 | **~50 FPS** (31.3ms) | **85.2%** |
+| **1,048,576** | 1024 x 1024 | **~50 FPS** (31.3ms) | **80.23%** |
 | **4,194,304** | 2048 x 2048 | **~3 FPS** (500ms) | 85.1% |
 
 **Key Insights & Lessons Learned:**
