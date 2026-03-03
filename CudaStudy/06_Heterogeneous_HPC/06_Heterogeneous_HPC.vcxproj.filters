@@ -47,5 +47,8 @@
     <ClInclude Include="Simulation\UdpReceiver.h">
       <Filter>Simulation</Filter>
     </ClInclude>
+    <ClInclude Include="Simulation\stb_image.h">
+      <Filter>Simulation</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

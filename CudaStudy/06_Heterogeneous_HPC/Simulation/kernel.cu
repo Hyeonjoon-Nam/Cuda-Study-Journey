@@ -3,6 +3,7 @@
 #include <cuda_gl_interop.h>
 #include "kernel.cuh"
 #include <math_constants.h>
+#include <math.h>
 #include <stdio.h>
 
 // [Thrust] CUDA Standard Template Library for Sorting
@@ -51,9 +52,66 @@ __device__ float random(unsigned int seed) {
 }
 
 __device__ float4 add(float4 a, float4 b) { return make_float4(a.x + b.x, a.y + b.y, a.z + b.z, 0.0f); }
+
 __device__ float4 sub(float4 a, float4 b) { return make_float4(a.x - b.x, a.y - b.y, a.z - b.z, 0.0f); }
+
 __device__ float4 mult(float4 a, float s) { return make_float4(a.x * s, a.y * s, a.z * s, 0.0f); }
+
 __device__ float length(float4 v) { return sqrtf(v.x * v.x + v.y * v.y + v.z * v.z); }
+
+
+// Calculates a repulsive vector (Potential Field) applied by surrounding static obstacles.
+// Prevents agents from crossing physical boundaries by generating a force inversely proportional to the distance.
+__device__ float2 computeMapRepulsion(float4 pos) {
+    // Convert current world coordinates [-1.0, 1.0] to map grid indices [0, 127]
+    int gridPos_x = (int)((pos.x + 1.0f) / WORLD_SIZE * MAP_WIDTH);
+    int gridPos_y = (int)((pos.y + 1.0f) / WORLD_SIZE * MAP_HEIGHT);
+
+    gridPos_x = max(0, min(gridPos_x, MAP_WIDTH - 1));
+    gridPos_y = max(0, min(gridPos_y, MAP_HEIGHT - 1));
+
+    float2 total_repulsion = make_float2(0.0f, 0.0f);
+
+    float repulse_radius = 0.05f;
+    float repulse_force_scalar = 0.001f;
+
+    // Search 3x3 neighborhood for wall cells
+    for (int dx = -1; dx <= 1; ++dx) {
+        for (int dy = -1; dy <= 1; ++dy) {
+            int neigh_x = gridPos_x + dx;
+            int neigh_y = gridPos_y + dy;
+
+            if (neigh_x < 0 || neigh_x >= MAP_WIDTH || neigh_y < 0 || neigh_y >= MAP_HEIGHT) continue;
+
+            int idx = neigh_y * MAP_WIDTH + neigh_x;
+            if (d_map[idx] == 1) // If this cell is a wall
+            {
+                // Unproject grid indices back to the center of the cell in World Space
+                float wall_world_x = ((neigh_x + 0.5f) / MAP_WIDTH) * WORLD_SIZE - 1.0f;
+                float wall_world_y = ((neigh_y + 0.5f) / MAP_HEIGHT) * WORLD_SIZE - 1.0f;
+
+                // Calculate directional push vector (from wall to agent)
+                float push_x = pos.x - wall_world_x;
+                float push_y = pos.y - wall_world_y;
+
+                float dist = sqrtf(push_x * push_x + push_y * push_y);
+
+                // Apply linear falloff force if within the repulsion radius
+                if (dist > 0.0001f && dist < repulse_radius) {
+                    push_x /= dist; // Normalize direction
+                    push_y /= dist;
+
+                    float force_mag = (repulse_radius - dist) / repulse_radius;
+
+                    total_repulsion.x += push_x * force_mag * repulse_force_scalar;
+                    total_repulsion.y += push_y * force_mag * repulse_force_scalar;
+                }
+            }
+        }
+    }
+
+    return total_repulsion;
+}
 
 // Calculate Cell ID (Hash) from Position
 __device__ int calcGridHash(float4 pos) {
@@ -198,6 +256,10 @@ __global__ void boids_grid_kernel(float4* pos_sorted, float4* vel_sorted,
 
         separation = mult(separation, c_avoidFactor);
     }
+
+    // Apply environmental repulsion to prevent agents from penetrating physical walls
+    float2 repulsion = computeMapRepulsion(my_pos);
+    my_vel = add(my_vel, make_float4(repulsion.x, repulsion.y, 0, 0));
 
     my_vel = add(my_vel, cohesion);
     my_vel = add(my_vel, separation);
@@ -352,4 +414,9 @@ void cleanupCuda(cudaGraphicsResource* vbo_resource) {
     if (dev_gridParticleIndex) cudaFree(dev_gridParticleIndex);
     if (dev_cellStart) cudaFree(dev_cellStart);
     if (dev_cellEnd) cudaFree(dev_cellEnd);
+}
+
+// Host function to upload the thresholded CPU map directly into the GPU's constant memory symbol.
+void initMapData(unsigned char* cpu_map) {
+    cudaMemcpyToSymbol(d_map, cpu_map, sizeof(unsigned char) * MAP_HEIGHT * MAP_WIDTH);
 }

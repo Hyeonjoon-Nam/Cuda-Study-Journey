@@ -146,6 +146,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Simulation\SerialPort.h" />
+    <ClInclude Include="Simulation\stb_image.h" />
     <ClInclude Include="Simulation\UdpReceiver.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

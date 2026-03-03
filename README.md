@@ -18,7 +18,7 @@ My goal is to understand the hardware architecture deeply and write highly optim
 | 03 | [Parallel Reduction](./CudaStudy/03_ParallelReduction) | Warp Divergence, Loop Unrolling, Volatile, Bank Conflicts | Done |
 | 04 | [N-Body Simulation](./CudaStudy/04_NBodySimulation) | Compute vs Memory Bound, Tiling, Thread Coarsening, Occupancy | Done |
 | 05 | Spatial Partitioning | Uniform Grid, Atomic Operations | Integrated into Project 06 |
-| 06 | [Heterogeneous HPC System](./CudaStudy/06_Heterogeneous_HPC) | Wireless UDP (WinSock2), Bare-Metal (AVR), CUDA-GL Interop | **Wireless Integrated** |
+| 06 | [Heterogeneous HPC System](./CudaStudy/06_Heterogeneous_HPC) | Wireless UDP, CUDA-GL Interop, Swarm Logistics | **In Progress** |
 
 ---
 
@@ -46,7 +46,7 @@ graph LR
 `[ESP32/Arduino]` --(UDP/UART)--> `[IO Thread: Receiver]` --(Atomic Memory)--> `[HPC Core: CUDA Kernel]` --(Interop)--> `[Render: OpenGL]`
 
 ### Key Technical Objectives & Results
-- **Wireless Modernization (New):** Completed Phase 1. Implemented **UDP Telemetry** via ESP32-S3 (SoftAP) and C++ WinSock2, breaking physical USB constraints.
+- **Wireless Modernization:** Implemented **UDP Telemetry** via ESP32-S3 (SoftAP) and C++ WinSock2, breaking physical USB constraints.
 - **HPC Core (CUDA & OpenGL):** Zero-copy rendering with Spatial Partitioning (Uniform Grid) for real-time performance.
 - **Embedded Interface (Bare-metal):** Direct register manipulation (`ADMUX`, `UBRR0`) replacing standard Arduino libraries for ultra-low latency.
 
@@ -56,9 +56,10 @@ graph LR
 
 ## Future Roadmap: From Simulation to Solution
 
-### Goal 1: Logistics Swarm Simulator (Next Move)
-A massive Multi-Agent Pathfinding (MAPF) simulation mimicking thousands of AGVs (Automated Guided Vehicles) in a warehouse environment.
-- **HPC Routing:** Transitioning from individual A* to **Vector Flow Fields** (Reverse BFS) to achieve $O(1)$ path lookup for massive agent counts.
+### Goal 1: Logistics Swarm Simulator (Ongoing)
+Transforming simple boids into a massive Multi-Agent Pathfinding (MAPF) simulation mimicking thousands of AGVs in a warehouse.
+- **Environmental Physics:** Implemented a potential field using constant memory to handle static obstacles parsed from 2D floor plans. *(Done)*
+- **HPC Routing:** Transitioning from individual A* to **Vector Flow Fields** to achieve $O(1)$ path lookup for massive agent counts. *(Next)*
 - **Local Avoidance:** Implementing GPU-accelerated collision avoidance to resolve traffic deadlocks in narrow corridors.
 
 ### Goal 2: Unified HPC Sandbox Architecture

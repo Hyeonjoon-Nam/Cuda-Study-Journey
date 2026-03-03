@@ -29,6 +29,15 @@ float anim_time = 0.0f;
 int fps_frame_count = 0;
 int fps_time_base = 0;
 
+// Lightweight single-header library used to parse the floor plan image into a pixel array.
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
+
+// Host-side buffer for the warehouse layout (0=navigable, 1=obstacle).
+// Retained in memory to visualize the static environment via OpenGL.
+unsigned char g_cpu_map[128 * 128];
+bool g_map_loaded = false;
+
 void initGL() {
     glGenBuffers(1, &vbo);
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
@@ -40,6 +49,30 @@ void initGL() {
 
     // Register the OpenGL VBO with CUDA
     initCuda(&cuda_vbo_resource, vbo, num_particles);
+}
+
+// Parses the warehouse floor plan image, thresholds grayscale values to binary states,
+// and dispatches the structural data to the GPU constant memory.
+void loadMapFromFile() {
+    int width, height, channels;
+    unsigned char* img = stbi_load("assets/map.png", &width, &height, &channels, 1);
+
+    if (img == NULL) {
+        std::cerr << "Warning: map.png not found. Using empty map." << std::endl;
+        memset(g_cpu_map, 0, sizeof(g_cpu_map));
+    }
+    else {
+        std::cout << "map.png loaded successfully (" << width << "x" << height << ")" << std::endl;
+        // Thresholding: Dark pixels (<128) become walls (1), light pixels become paths (0)
+        for (int i = 0; i < 128 * 128; ++i) {
+            g_cpu_map[i] = img[i] < 128 ? 1 : 0;
+        }
+        stbi_image_free(img);
+        g_map_loaded = true;
+    }
+
+    // Dispatch to GPU Constant Memory
+    initMapData(g_cpu_map);
 }
 
 void calculateFPS() {
@@ -158,6 +191,25 @@ void display() {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
+    // Render static environmental obstacles (Racks/Walls)
+    if (g_map_loaded) {
+        glPointSize(5.0f); // Scale to fill the 128x128 visual grid
+        glColor3f(0.5f, 0.5f, 0.5f); // Render walls
+        glBegin(GL_POINTS);
+        for (int y = 0; y < 128; ++y) {
+            for (int x = 0; x < 128; ++x) {
+                if (g_cpu_map[y * 128 + x] == 1) {
+                    // Map [0, 127] indices to OpenGL [-1.0, 1.0] coordinates.
+                    // The +0.5f offset aligns the visual point exactly with the physical collision center.
+                    float gl_x = ((x + 0.5f) / 64.0f) - 1.0f;
+                    float gl_y = ((y + 0.5f) / 64.0f) - 1.0f;
+                    glVertex2f(gl_x, gl_y);
+                }
+            }
+        }
+        glEnd();
+    }
+
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
     glVertexPointer(4, GL_FLOAT, 0, (void*)0);
     glEnableClientState(GL_VERTEX_ARRAY);
@@ -186,6 +238,7 @@ int main(int argc, char** argv) {
 
     glewInit();
     initGL();
+    loadMapFromFile();
 
     glutDisplayFunc(display);
 

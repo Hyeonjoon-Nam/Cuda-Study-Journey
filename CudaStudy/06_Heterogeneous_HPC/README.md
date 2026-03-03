@@ -60,10 +60,10 @@ graph LR
 ├── Firmware/
 │   ├── Wireless_Potentiometer_UDP.ino   # [Modern] ESP32 UDP Telemetry
 │   └── BareMetal_Potentiometer.ino      # [Legacy] Register-level AVR Firmware
-├── Simulation/                           # [HPC Core] Main Application
-│   ├── UdpReceiver.h / .cpp              # WinSock2 UDP Implementation
-│   ├── SerialPort.h / .cpp               # Win32 Serial Implementation
-│   ├── kernel.cu / .cuh                  # CUDA Physics Kernels
+├── Simulation/                          # [HPC Core] Main Application
+│   ├── UdpReceiver.h / .cpp             # WinSock2 UDP Implementation
+│   ├── SerialPort.h / .cpp              # Win32 Serial Implementation
+│   ├── kernel.cu / .cuh                 # CUDA Physics Kernels
 │   └── main.cpp                         # OpenGL Loop & Threading
 └── README.md
 ```
@@ -80,8 +80,10 @@ graph LR
 
 ### Milestone 2: Logistics Swarm Simulation (In Progress)
 *Transforming simple boids into goal-oriented AGVs (Automated Guided Vehicles) for warehouse logistics.*
-- [ ] **Step 1: Grid-based Warehouse Map Definition**
-    - Define static obstacles (racks, walls) and navigable paths for agents.
+- [x] **Step 1: Grid-based Warehouse Map Definition**
+    - Parsed 2D floor plans via `stb_image` and thresholded into binary obstacles.
+    - Optimized memory access by storing the layout in GPU `__constant__` memory.
+    - Implemented a Potential Field to apply physical repulsion between agents and static walls.
 - [ ] **Step 2: Vector Flow Field Pathfinding**
     - Implement Dijkstra/BFS-based Flow Field for $O(1)$ path lookup on GPU kernels.
 - [ ] **Step 3: Collision Avoidance & Traffic Control**
