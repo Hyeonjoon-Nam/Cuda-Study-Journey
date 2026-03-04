@@ -72,8 +72,8 @@ __device__ float2 computeMapRepulsion(float4 pos) {
 
     float2 total_repulsion = make_float2(0.0f, 0.0f);
 
-    float repulse_radius = 0.05f;
-    float repulse_force_scalar = 0.001f;
+    float repulse_radius = 0.025f;
+    float repulse_force_scalar = 0.002f;
 
     // Search 3x3 neighborhood for wall cells
     for (int dx = -1; dx <= 1; ++dx) {
@@ -111,6 +111,62 @@ __device__ float2 computeMapRepulsion(float4 pos) {
     }
 
     return total_repulsion;
+}
+
+// Computes the Vector Flow Field force.
+// Samples the local 8-way distance gradient to steer the agent towards the global goal in O(1) time.
+__device__ float2 computeFlowFieldForce(float4 pos) {
+    int gridPos_x = (int)((pos.x + 1.0f) / WORLD_SIZE * MAP_WIDTH);
+    int gridPos_y = (int)((pos.y + 1.0f) / WORLD_SIZE * MAP_HEIGHT);
+
+    gridPos_x = max(0, min(gridPos_x, MAP_WIDTH - 1));
+    gridPos_y = max(0, min(gridPos_y, MAP_HEIGHT - 1));
+
+    unsigned short current_dist = d_dist_map[gridPos_y * MAP_WIDTH + gridPos_x];
+
+    if (current_dist == 65535 || current_dist == 0) return make_float2(0.0f, 0.0f);
+
+    float2 flow_dir = make_float2(0.0f, 0.0f);
+
+    int min_dist = current_dist;
+
+    for (int dy = -1; dy <= 1; ++dy) {
+        for (int dx = -1; dx <= 1; ++dx) {
+            if (dx == 0 && dy == 0) continue;
+
+            int nx = gridPos_x + dx;
+            int ny = gridPos_y + dy;
+
+            if (nx < 0 || nx >= MAP_WIDTH || ny < 0 || ny >= MAP_HEIGHT) continue;
+
+            int idx = ny * MAP_WIDTH + nx;
+
+            if (d_map[idx] == 1) continue;
+
+            if (d_dist_map[idx] < current_dist) {
+                float weight = (float)(current_dist - d_dist_map[idx]);
+
+                flow_dir.x += dx * weight;
+                flow_dir.y += dy * weight;
+
+                if (d_dist_map[idx] < min_dist) min_dist = d_dist_map[idx];
+            }
+        }
+    }
+
+    if (min_dist == current_dist) return make_float2(0.0f, 0.0f);
+
+    float length = sqrtf(flow_dir.x * flow_dir.x + flow_dir.y * flow_dir.y);
+    if (length > 0.0001f) {
+        flow_dir.x /= length;
+        flow_dir.y /= length;
+
+        float flow_strength = 0.005f;
+        flow_dir.x *= flow_strength;
+        flow_dir.y *= flow_strength;
+    }
+
+    return flow_dir;
 }
 
 // Calculate Cell ID (Hash) from Position
@@ -261,24 +317,32 @@ __global__ void boids_grid_kernel(float4* pos_sorted, float4* vel_sorted,
     float2 repulsion = computeMapRepulsion(my_pos);
     my_vel = add(my_vel, make_float4(repulsion.x, repulsion.y, 0, 0));
 
+    // Apply flow field force
+    float2 flowFieldForce = computeFlowFieldForce(my_pos);
+    my_vel = add(my_vel, make_float4(flowFieldForce.x, flowFieldForce.y, 0, 0));
+
+    // Friction
+    my_vel = mult(my_vel, 0.98f);
+
     my_vel = add(my_vel, cohesion);
     my_vel = add(my_vel, separation);
     my_vel = add(my_vel, alignment);
 
     // Limit Speed
+    float current_max_speed = c_maxSpeed * 1.5f;
     float speed = length(my_vel);
-    if (speed > c_maxSpeed) {
-        my_vel = mult(my_vel, c_maxSpeed / speed);
+    if (speed > current_max_speed) {
+        my_vel = mult(my_vel, current_max_speed / speed);
     }
 
     my_pos = add(my_pos, my_vel);
     my_pos.w = 1.0f; // Critical for OpenGL
 
-    // Boundary Wrap
-    if (my_pos.x > 1.0f) my_pos.x = -1.0f;
-    if (my_pos.x < -1.0f) my_pos.x = 1.0f;
-    if (my_pos.y > 1.0f) my_pos.y = -1.0f;
-    if (my_pos.y < -1.0f) my_pos.y = 1.0f;
+    // Boundary constraint
+    if (my_pos.x > 1.0f) { my_pos.x = 1.0f; my_vel.x *= -1.0f; }
+    if (my_pos.x < -1.0f) { my_pos.x = -1.0f; my_vel.x *= -1.0f; }
+    if (my_pos.y > 1.0f) { my_pos.y = 1.0f; my_vel.y *= -1.0f; }
+    if (my_pos.y < -1.0f) { my_pos.y = -1.0f; my_vel.y *= -1.0f; }
 
     // Store in original buffer (mapped to VBO)
     // We use the 'gridParticleIndex' to write back to the original slot?
@@ -417,6 +481,7 @@ void cleanupCuda(cudaGraphicsResource* vbo_resource) {
 }
 
 // Host function to upload the thresholded CPU map directly into the GPU's constant memory symbol.
-void initMapData(unsigned char* cpu_map) {
+void initMapData(unsigned char* cpu_map, unsigned short* cpu_dist_map) {
     cudaMemcpyToSymbol(d_map, cpu_map, sizeof(unsigned char) * MAP_HEIGHT * MAP_WIDTH);
+    cudaMemcpyToSymbol(d_dist_map, cpu_dist_map, sizeof(unsigned short) * MAP_HEIGHT * MAP_WIDTH);
 }

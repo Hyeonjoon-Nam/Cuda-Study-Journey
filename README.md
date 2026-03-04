@@ -59,8 +59,8 @@ graph LR
 ### Goal 1: Logistics Swarm Simulator (Ongoing)
 Transforming simple boids into a massive Multi-Agent Pathfinding (MAPF) simulation mimicking thousands of AGVs in a warehouse.
 - **Environmental Physics:** Implemented a potential field using constant memory to handle static obstacles parsed from 2D floor plans. *(Done)*
-- **HPC Routing:** Transitioning from individual A* to **Vector Flow Fields** to achieve $O(1)$ path lookup for massive agent counts. *(Next)*
-- **Local Avoidance:** Implementing GPU-accelerated collision avoidance to resolve traffic deadlocks in narrow corridors.
+- **HPC Routing:** Achieved $O(1)$ path lookup for massive agent counts by transitioning from A* to **Vector Flow Fields** stored in GPU constant memory. *(Done)*
+- **Local Avoidance:** Implementing GPU-accelerated collision avoidance to resolve traffic deadlocks in narrow corridors. *(Next)*
 
 ### Goal 2: Unified HPC Sandbox Architecture
 Consolidating standalone projects into a single, cohesive engine framework.
