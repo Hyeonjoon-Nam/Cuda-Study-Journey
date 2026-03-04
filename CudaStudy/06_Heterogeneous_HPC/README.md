@@ -84,8 +84,10 @@ graph LR
     - Parsed 2D floor plans via `stb_image` and thresholded into binary obstacles.
     - Optimized memory access by storing the layout in GPU `__constant__` memory.
     - Implemented a Potential Field to apply physical repulsion between agents and static walls.
-- [ ] **Step 2: Vector Flow Field Pathfinding**
-    - Implement Dijkstra/BFS-based Flow Field for $O(1)$ path lookup on GPU kernels.
+- [x] **Step 2: Vector Flow Field Pathfinding**
+    - Implemented CPU-based BFS to generate an Integration Field (Distance Map).
+    - Utilized GPU `__constant__` memory (32KB) for $O(1)$ path lookup per agent.
+    - Enabled massive swarms to navigate complex warehouse corridors seamlessly.
 - [ ] **Step 3: Collision Avoidance & Traffic Control**
     - Integrate tangential forces to resolve traffic deadlocks in narrow warehouse corridors.
 - [ ] **Step 4: Real-time Goal Assignment via ESP32**

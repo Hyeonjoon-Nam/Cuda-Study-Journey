@@ -4,6 +4,8 @@
 #include <thread>
 #include <atomic>
 #include <iostream>
+#include <queue>
+#include <vector>
 
 #include "kernel.cuh" 
 #include "SerialPort.h" // Retaining for legacy support
@@ -38,6 +40,11 @@ int fps_time_base = 0;
 unsigned char g_cpu_map[128 * 128];
 bool g_map_loaded = false;
 
+// Host-side distance field generated via BFS and target coordinates.
+unsigned short g_cpu_dist_map[128 * 128];
+int goal_x = -1;
+int goal_y = -1;
+
 void initGL() {
     glGenBuffers(1, &vbo);
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
@@ -55,7 +62,7 @@ void initGL() {
 // and dispatches the structural data to the GPU constant memory.
 void loadMapFromFile() {
     int width, height, channels;
-    unsigned char* img = stbi_load("assets/map.png", &width, &height, &channels, 1);
+    unsigned char* img = stbi_load("assets/map.png", &width, &height, &channels, 3);
 
     if (img == NULL) {
         std::cerr << "Warning: map.png not found. Using empty map." << std::endl;
@@ -63,16 +70,73 @@ void loadMapFromFile() {
     }
     else {
         std::cout << "map.png loaded successfully (" << width << "x" << height << ")" << std::endl;
-        // Thresholding: Dark pixels (<128) become walls (1), light pixels become paths (0)
-        for (int i = 0; i < 128 * 128; ++i) {
-            g_cpu_map[i] = img[i] < 128 ? 1 : 0;
+
+        // Parse RGB pixels: Red(Target), Black(Wall), White(Path).
+        for (int x = 0; x < 128; ++x) {
+            for (int y = 0; y < 128; ++y) {
+                int img_idx = (y * width + x) * 3;
+
+                int r = img[img_idx];
+                int g = img[img_idx + 1];
+                int b = img[img_idx + 2];
+
+                // If the cell is nearly 'Red', set it to be the goal.
+                if (r > 200 && g < 50 && b < 50) {
+                    goal_x = x;
+                    goal_y = y;
+                    g_cpu_map[y * 128 + x] = 0;
+                }
+                // If the cell is dark, set it to be a wall.
+                else if (r < 128 && g < 128 && b < 128) {
+                    g_cpu_map[y * 128 + x] = 1;
+                }
+                // Else, it's a path.
+                else {
+                    g_cpu_map[y * 128 + x] = 0;
+                }
+            }
         }
         stbi_image_free(img);
         g_map_loaded = true;
     }
+}
 
-    // Dispatch to GPU Constant Memory
-    initMapData(g_cpu_map);
+// Generates a discrete distance field using Breadth-First Search (BFS).
+// Creates a gradient that flows from all navigable cells down to the target goal(0).
+void generateDistanceMap() {
+    memset(g_cpu_dist_map, 0xFF, sizeof(g_cpu_dist_map));
+
+    g_cpu_dist_map[goal_y * 128 + goal_x] = 0;
+
+    std::queue<std::pair<int, int>> q;
+    q.push({ goal_x, goal_y });
+    
+    int dx[8] = { 0, 0, -1, 1, -1, 1, -1, 1 };
+    int dy[8] = { -1, 1, 0, 0, -1, -1, 1, 1 };
+
+    while (!q.empty()) {
+        auto& cur = q.front(); q.pop();
+        int x = cur.first;
+        int y = cur.second;
+        
+        int current_dist = g_cpu_dist_map[y * 128 + x];
+
+        for (int i = 0; i < 8; ++i) {
+            int nx = x + dx[i];
+            int ny = y + dy[i];
+
+            if (nx < 0 || nx >= 128 ||  // Boundary check
+                ny < 0 || ny >= 128 ||
+                g_cpu_map[ny * 128 + nx] == 1 || // If it's a wall, continue
+                g_cpu_dist_map[ny * 128 + nx] <= current_dist + 1 // If existing path is better
+                ) continue;
+
+            g_cpu_dist_map[ny * 128 + nx] = current_dist + 1;
+            q.push({ nx, ny });
+        }
+
+    }
+
 }
 
 void calculateFPS() {
@@ -191,20 +255,27 @@ void display() {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
-    // Render static environmental obstacles (Racks/Walls)
+    // Render static environmental obstacles and the target goal
     if (g_map_loaded) {
-        glPointSize(5.0f); // Scale to fill the 128x128 visual grid
-        glColor3f(0.5f, 0.5f, 0.5f); // Render walls
+        glPointSize(4.0f); // Scale to fill the 128x128 visual grid
         glBegin(GL_POINTS);
         for (int y = 0; y < 128; ++y) {
             for (int x = 0; x < 128; ++x) {
-                if (g_cpu_map[y * 128 + x] == 1) {
-                    // Map [0, 127] indices to OpenGL [-1.0, 1.0] coordinates.
-                    // The +0.5f offset aligns the visual point exactly with the physical collision center.
-                    float gl_x = ((x + 0.5f) / 64.0f) - 1.0f;
-                    float gl_y = ((y + 0.5f) / 64.0f) - 1.0f;
-                    glVertex2f(gl_x, gl_y);
+                int dist = g_cpu_dist_map[y * 128 + x];
+
+                if (dist == 0) {
+                    glColor3f(1.0f, 0.f, 0.f);
                 }
+                else if (g_cpu_map[y * 128 + x] == 1) {
+                    glColor3f(1.0f, 1.0f, 1.0f);
+                }
+                else {
+                    glColor3f(0.2f, 0.2f, 0.2f);
+                }
+
+                float gl_x = ((x + 0.5f) / 64.0f) - 1.0f;
+                float gl_y = ((y + 0.5f) / 64.0f) - 1.0f;
+                glVertex2f(gl_x, gl_y);
             }
         }
         glEnd();
@@ -239,6 +310,9 @@ int main(int argc, char** argv) {
     glewInit();
     initGL();
     loadMapFromFile();
+    generateDistanceMap();
+    // Dispatch to GPU Constant Memory
+    initMapData(g_cpu_map, g_cpu_dist_map);
 
     glutDisplayFunc(display);
 
